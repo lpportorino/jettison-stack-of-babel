@@ -374,12 +374,3 @@ This project (including Dockerfiles, scripts, and configuration) is licensed und
 
 **The tools and software packages installed within the Docker image retain their original licenses.**
 
-**Before using this image in production or commercial contexts, you should review the licenses of the individual tools and ensure compliance with their terms.** The GPL-3.0 license of this project applies only to the Docker build configuration and supporting scripts, not to the software packages installed within the container.
-
-For a comprehensive list of installed tools and their licenses, run:
-```bash
-docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
-  /scripts/check_versions.sh --licenses  # Note: --licenses flag would need to be implemented
-```
-
-**Note**: This image is designed for the Jettison project's specific needs but can be used for any polyglot development requiring these tools.
