@@ -210,7 +210,7 @@ Options:
     --no-cache       Build without cache
     --test-only      Only run tests on existing image
     --push           Push to registry after build
-    --quick          Quick build (skip tests)
+    --quick          Quick build (skip tests - NOT RECOMMENDED!)
     --help           Show this help message
 
 Environment Variables:
@@ -221,7 +221,7 @@ Examples:
     $0                    # Build for current architecture
     $0 --no-cache         # Clean build
     $0 --push             # Build and push to registry
-    $0 --quick            # Quick build without tests
+    $0 --quick            # Quick build without tests (NOT RECOMMENDED!)
 
 EOF
 }

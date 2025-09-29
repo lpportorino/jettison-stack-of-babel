@@ -28,11 +28,11 @@ Provides a consistent, reproducible development environment with all necessary c
 ## 🛠️ Detailed Tool Inventory
 
 ### Programming Languages
-- **Java** - OpenJDK 21 LTS
-- **Kotlin** - Latest stable (2.1.x)
-- **Clojure** - Latest stable (1.12.x) with Leiningen
-- **Python** - 3.12+ via pyenv
-- **Rust** - Latest stable (1.85.x) via rustup
+- **Java** - OpenJDK 21 LTS (via SDKMAN)
+- **Kotlin** - Latest stable via SDKMAN
+- **Clojure** - Latest stable with Leiningen
+- **Python** - Latest stable versions via pyenv
+- **Rust** - Latest stable via rustup
 - **JavaScript/TypeScript** - Node.js 22 LTS
 - **C/C++** - LLVM/Clang 21
 
@@ -43,8 +43,8 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Bun** - All-in-one JavaScript runtime
 
 ### Build Tools
-- **Maven** - Java/Kotlin build tool
-- **Gradle** - Modern build automation
+- **Maven** - Java/Kotlin build tool (via SDKMAN)
+- **Gradle** - Modern build automation (via SDKMAN)
 - **Leiningen** - Clojure project automation
 - **Cargo** - Rust package manager and build tool
 - **npm/yarn/pnpm** - JavaScript package managers
@@ -80,7 +80,10 @@ Provides a consistent, reproducible development environment with all necessary c
 # Auto-detect architecture and build optimized image
 ./build-local.sh
 
-# Quick build (skip tests)
+# Enhanced build with comprehensive logging
+./build-local-enhanced.sh
+
+# Quick build (skip tests - NOT RECOMMENDED!)
 ./build-local.sh --quick
 ```
 
@@ -180,7 +183,9 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 
 ## 🔧 Building Locally
 
-### Quick Start (Universal Build Script)
+### Quick Start (Universal Build Scripts)
+
+#### Standard Build Script
 ```bash
 # Automatic architecture detection and optimized build
 ./build-local.sh
@@ -188,7 +193,7 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 # Build without cache
 ./build-local.sh --no-cache
 
-# Quick build (skip tests)
+# Quick build (skip tests - NOT RECOMMENDED!)
 ./build-local.sh --quick
 
 # Build and push to registry
@@ -198,7 +203,26 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 ./build-local.sh --test-only
 ```
 
-The `build-local.sh` script automatically:
+#### Enhanced Build Script (with Comprehensive Logging)
+```bash
+# Build with detailed logging and test reports
+./build-local-enhanced.sh
+
+# Build without cache
+./build-local-enhanced.sh --no-cache
+
+# Run tests on existing image with logging
+./build-local-enhanced.sh --test-only
+
+# Generate report from existing logs
+./build-local-enhanced.sh --report-only
+
+# View logs after build
+ls -la build-logs/TIMESTAMP/
+cat build-logs/TIMESTAMP/test-report.md
+```
+
+The build scripts automatically:
 - Detects your architecture (ARM64 or AMD64)
 - Selects the appropriate Dockerfile
 - Applies optimizations (Cortex-A78 for NVIDIA Orin)

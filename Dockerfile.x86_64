@@ -101,44 +101,31 @@ RUN apt-get install -y nodejs && \
     npm install -g npm@latest
 
 # ============================================================================
-# Install Build Tools (Maven, Gradle)
+# Install SDKMAN for managing JVM tools (Maven, Gradle, Kotlin, etc.)
 # ============================================================================
-# Maven
-ARG MAVEN_VERSION=3.9.8
-RUN wget -q https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
-    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt && \
-    ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven && \
-    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+RUN curl -s "https://get.sdkman.io" | bash
 
-ENV MAVEN_HOME=/opt/maven
-ENV PATH=$MAVEN_HOME/bin:$PATH
+# Source SDKMAN and install latest stable versions of tools
+RUN bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && \
+    sdk install maven && \
+    sdk install gradle && \
+    sdk install kotlin && \
+    sdk flush archives"
 
-# Gradle
-ARG GRADLE_VERSION=8.10
-RUN wget -q https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
-    unzip -q gradle-${GRADLE_VERSION}-bin.zip -C /opt && \
-    ln -s /opt/gradle-${GRADLE_VERSION} /opt/gradle && \
-    rm gradle-${GRADLE_VERSION}-bin.zip
-
-ENV GRADLE_HOME=/opt/gradle
-ENV PATH=$GRADLE_HOME/bin:$PATH
-
-# ============================================================================
-# Install Kotlin via SDKMAN (more reliable than snap in Docker)
-# ============================================================================
-RUN curl -s "https://get.sdkman.io" | bash && \
-    bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install kotlin"
-
-ENV PATH=$HOME/.sdkman/candidates/kotlin/current/bin:$PATH
+# Set environment variables for SDKMAN tools
+ENV SDKMAN_DIR=/root/.sdkman
+ENV PATH=$SDKMAN_DIR/candidates/maven/current/bin:$PATH
+ENV PATH=$SDKMAN_DIR/candidates/gradle/current/bin:$PATH
+ENV PATH=$SDKMAN_DIR/candidates/kotlin/current/bin:$PATH
 
 # ============================================================================
 # Install Clojure and Leiningen
 # ============================================================================
-# Clojure CLI tools
-RUN curl -O https://download.clojure.org/install/linux-install-1.12.0.1479.sh && \
-    chmod +x linux-install-1.12.0.1479.sh && \
-    ./linux-install-1.12.0.1479.sh && \
-    rm linux-install-1.12.0.1479.sh
+# Clojure CLI tools - Get latest version
+RUN curl -O https://download.clojure.org/install/linux-install.sh && \
+    chmod +x linux-install.sh && \
+    ./linux-install.sh && \
+    rm linux-install.sh
 
 # Leiningen
 RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /usr/local/bin/lein && \
@@ -157,14 +144,18 @@ ENV PATH=$PYENV_ROOT/bin:$PATH
 # Configure pyenv
 RUN echo 'eval "$(pyenv init -)"' >> /etc/profile.d/pyenv.sh
 
-# Install Python 3.12 and 3.13
-RUN pyenv install 3.12.7 && \
-    pyenv install 3.13.0 && \
-    pyenv global 3.13.0
+# Install latest stable Python versions
+RUN PYTHON_LATEST=$(pyenv install --list | grep -E '^\s*3\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ') && \
+    PYTHON_PREV=$(pyenv install --list | grep -E '^\s*3\.[0-9]+\.[0-9]+$' | tail -2 | head -1 | tr -d ' ') && \
+    echo "Installing Python ${PYTHON_PREV} and ${PYTHON_LATEST}" && \
+    pyenv install ${PYTHON_PREV} && \
+    pyenv install ${PYTHON_LATEST} && \
+    pyenv global ${PYTHON_LATEST}
 
 # Make Python available system-wide
-RUN ln -sf $PYENV_ROOT/versions/3.13.0/bin/python3 /usr/local/bin/python3 && \
-    ln -sf $PYENV_ROOT/versions/3.13.0/bin/pip3 /usr/local/bin/pip3
+RUN PYTHON_VERSION=$(pyenv version-name) && \
+    ln -sf $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python3 /usr/local/bin/python3 && \
+    ln -sf $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip3 /usr/local/bin/pip3
 
 # ============================================================================
 # Install Nuitka (Python Compiler)
@@ -195,7 +186,10 @@ ENV PATH=$BUN_INSTALL/bin:$PATH
 # ============================================================================
 # Install JavaScript/TypeScript Global Packages
 # ============================================================================
-RUN npm install -g \
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm install -g \
     typescript@latest \
     esbuild@latest \
     prettier@latest \
@@ -205,7 +199,11 @@ RUN npm install -g \
     yarn@latest \
     pnpm@latest \
     turbo@latest \
-    nx@latest
+    nx@latest || \
+    (echo "Retrying npm install..." && npm install -g \
+    typescript esbuild prettier eslint \
+    @lit/localize @lit/localize-tools \
+    yarn pnpm turbo nx)
 
 # ============================================================================
 # Create Scripts Directory
