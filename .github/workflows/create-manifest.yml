@@ -1,0 +1,101 @@
+name: Create Multi-Arch Manifest
+
+on:
+  workflow_run:
+    workflows: ["Build ARM64 (NVIDIA Orin)", "Build AMD64 (Testing)"]
+    types:
+      - completed
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  create-manifest:
+    name: Create Multi-Architecture Manifest
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          # Wait for both architecture images to be available
+          echo "Waiting for architecture-specific images to be available..."
+          sleep 30
+
+          # Get the current date for versioning
+          VERSION=$(date +%Y.%m.%d)
+
+          # Create manifest for latest
+          docker manifest create \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
+
+          # Annotate the manifest with architecture info
+          docker manifest annotate \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 \
+            --arch arm64 \
+            --variant v8 \
+            --os linux
+
+          docker manifest annotate \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
+            --arch amd64 \
+            --os linux
+
+          # Push the manifest
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+          # Also create versioned manifest
+          docker manifest create \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
+
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+
+          echo "✅ Multi-architecture manifest created successfully"
+          echo "Primary: ARM64 (NVIDIA Orin optimized)"
+          echo "Secondary: AMD64 (testing only)"
+
+      - name: Generate manifest report
+        run: |
+          echo "## Multi-Architecture Manifest Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Manifest Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Tag**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date Tag**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(date +%Y.%m.%d)\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Architectures" >> $GITHUB_STEP_SUMMARY
+          echo "| Architecture | Platform | Target | Purpose |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------------|----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ARM64 | linux/arm64 | NVIDIA Orin | Production (Primary) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AMD64 | linux/amd64 | x86_64 | Development/Testing |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Pulls correct architecture automatically" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Force specific architecture" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64  # NVIDIA Orin" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64  # Testing" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

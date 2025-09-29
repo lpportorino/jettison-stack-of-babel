@@ -2,9 +2,19 @@
 
 A universal polyglot Docker image (`jon-babylon`) containing all language toolchains and development tools for the Jettison project. Named after the Tower of Babel for its extreme multilingual capabilities.
 
+## 🎯 Primary Target Platform
+
+**Ubuntu 22.04 ARM64 on NVIDIA AGX Orin**
+
+### Supported Hardware Configurations:
+- **Orin NX**: 8-core ARM® Cortex®-A78AE v8.2 64-bit CPU (2MB L2 + 4MB L3)
+- **Orin AGX**: 12-core ARM® Cortex®-A78AE v8.2 64-bit CPU (3MB L2 + 6MB L3)
+
+> **Note**: The AMD64 variant is provided for local development and testing only. All optimizations target ARM64 architecture.
+
 ## 🎯 Purpose
 
-Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally.
+Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally. The image is optimized for ARM64 execution on NVIDIA Orin platforms.
 
 ## 📦 Included Tools
 
@@ -123,24 +133,52 @@ docker run --rm -v $(pwd):/workspace -w /workspace \
 
 ## 🏗️ Architecture Support
 
-- **Primary**: ARM64/aarch64 (NVIDIA Orin, Raspberry Pi 4+)
-- **Secondary**: x86_64/amd64 (Development workstations)
+### Primary Target (Production)
+- **Platform**: ARM64/aarch64
+- **Hardware**: NVIDIA AGX Orin
+- **Build Runner**: `ubuntu-22.04-arm` (GitHub Actions)
+- **Optimization**: `-march=armv8.2-a -mtune=cortex-a78`
 
-Images are automatically built for both architectures and published to GitHub Container Registry.
+### Secondary Target (Development/Testing)
+- **Platform**: x86_64/amd64
+- **Hardware**: Development workstations
+- **Build Runner**: `ubuntu-22.04` (GitHub Actions)
+- **Purpose**: Local development and testing only
+
+Both architectures are built in parallel using separate GitHub Actions workflows and pushed to GitHub Container Registry with architecture-specific tags.
 
 ## 🔧 Building Locally
 
-### For Current Architecture
+### Using Makefile (Recommended)
 ```bash
-./scripts/build.sh
+# Show available targets
+make help
+
+# Build for current architecture
+make build
+
+# Build optimized for NVIDIA Orin (ARM64)
+make build-arm64
+
+# Build for AMD64 (testing only)
+make build-amd64
+
+# Build both architectures
+make build-multi
+
+# Run tests
+make test
 ```
 
-### For Specific Architecture
+### Manual Build
 ```bash
-# Build for ARM64 on x86_64 (requires Docker Buildx)
-docker buildx build --platform linux/arm64 -t jon-babylon:arm64 -f Dockerfile.arm64 .
+# Build for ARM64 with Orin optimizations
+docker buildx build --platform linux/arm64 \
+  --build-arg MARCH=armv8.2-a \
+  --build-arg MTUNE=cortex-a78 \
+  -t jon-babylon:arm64 -f Dockerfile.arm64 .
 
-# Build for x86_64
+# Build for x86_64 (testing only)
 docker build -t jon-babylon:x86_64 -f Dockerfile.x86_64 .
 ```
 
@@ -156,23 +194,66 @@ docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
 
 ## 🔄 CI/CD Pipeline
 
-The image is automatically built and published via GitHub Actions when:
-- Code is pushed to the `main` branch
-- A new release is tagged
-- Daily at 00:00 UTC (to pick up tool updates)
+### Parallel Architecture Builds
+The images are built in parallel on architecture-specific runners:
 
-### Workflow
-1. Build multi-architecture images
-2. Run version validation tests
-3. Build test projects for each language
-4. Push to GitHub Container Registry if all tests pass
+#### ARM64 Workflow (`build-arm64.yml`)
+- **Runner**: `ubuntu-22.04-arm`
+- **Target**: NVIDIA AGX Orin
+- **Optimizations**: ARMv8.2-A with Cortex-A78 tuning
+- **Tags**: `latest-arm64`, `<version>-arm64`
+
+#### AMD64 Workflow (`build-amd64.yml`)
+- **Runner**: `ubuntu-22.04`
+- **Target**: Development/Testing
+- **Optimizations**: Generic x86-64
+- **Tags**: `latest-amd64`, `<version>-amd64`
+
+### Trigger Conditions
+- Push to `main` branch
+- New release tags
+- Daily at 00:00 UTC (tool updates)
+- Manual workflow dispatch
+
+### Build Process
+1. **Parallel Builds**: ARM64 and AMD64 build simultaneously on different runners
+2. **Shared Tests**: Both architectures run the same test suite (`tests/`)
+3. **Version Validation**: Check all tool versions
+4. **Integration Tests**: Build sample projects for each language
+5. **Registry Push**: Push architecture-specific images
+6. **Manifest Creation**: Create multi-arch manifest linking both images
 
 ## 📊 Image Details
 
-- **Base**: Ubuntu 22.04 LTS
+### Base Image
+- **OS**: Ubuntu 22.04 LTS
+- **Primary Architecture**: ARM64 (optimized for NVIDIA Orin)
+- **Secondary Architecture**: AMD64 (for testing)
+
+### Image Metrics
 - **Size**: ~2.5-3GB compressed
-- **Build Time**: ~20-30 minutes
+- **Build Time**: ~20-30 minutes per architecture
 - **Registry**: `ghcr.io/lpportorino/jon-babylon`
+
+### Image Tags
+```bash
+# Multi-arch manifest (pulls correct architecture automatically)
+ghcr.io/lpportorino/jon-babylon:latest
+
+# Architecture-specific tags
+ghcr.io/lpportorino/jon-babylon:latest-arm64    # NVIDIA Orin optimized
+ghcr.io/lpportorino/jon-babylon:latest-amd64    # Testing only
+
+# Version tags
+ghcr.io/lpportorino/jon-babylon:2024.01.15      # Date-based
+ghcr.io/lpportorino/jon-babylon:2024.01.15-arm64
+ghcr.io/lpportorino/jon-babylon:2024.01.15-amd64
+
+# Git commit tags
+ghcr.io/lpportorino/jon-babylon:<git-sha>
+ghcr.io/lpportorino/jon-babylon:<git-sha>-arm64
+ghcr.io/lpportorino/jon-babylon:<git-sha>-amd64
+```
 
 ## 🧪 Testing Strategy
 

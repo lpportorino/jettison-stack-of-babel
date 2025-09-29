@@ -1,0 +1,174 @@
+# Jon-Babylon Docker Image - ARM64 Optimized for NVIDIA AGX Orin
+# Target: Ubuntu 22.04 ARM64 on NVIDIA Orin (Cortex-A78AE)
+# Build with: make build-arm64
+
+# Build arguments for optimization
+ARG MARCH=armv8.2-a
+ARG MTUNE=cortex-a78
+ARG OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78"
+
+# Use the staged build system
+FROM ubuntu:22.04 AS base
+
+# Set architecture-specific environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    CFLAGS="${OPTFLAGS}" \
+    CXXFLAGS="${OPTFLAGS}" \
+    LDFLAGS="-Wl,-O3" \
+    RUSTFLAGS="-C target-cpu=cortex-a78 -C opt-level=3" \
+    MAKEFLAGS="-j8"
+
+# Note about optimization
+RUN echo "Building optimized for NVIDIA AGX Orin (ARM Cortex-A78AE)" && \
+    echo "Architecture: ARMv8.2-A" && \
+    echo "CPU: Cortex-A78" && \
+    echo "Optimizations: ${OPTFLAGS}"
+
+# Copy all stage dockerfiles and build scripts
+COPY docker/stages/ /tmp/stages/
+COPY tools/ /tmp/tools/
+COPY scripts/ /tmp/scripts/
+
+# Stage 00: Base setup
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        software-properties-common \
+        wget \
+        sudo \
+        locales \
+        git \
+        unzip \
+        xz-utils && \
+    locale-gen en_US.UTF-8 && \
+    useradd -m -s /bin/bash -u 1000 developer && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Stage 01: Build essentials with ARM64 optimizations
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc-aarch64-linux-gnu \
+        g++-aarch64-linux-gnu \
+        cmake \
+        ninja-build \
+        pkg-config \
+        autoconf \
+        automake \
+        libtool \
+        libssl-dev \
+        libffi-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        zlib1g-dev \
+        liblzma-dev \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Stage 02-04: JVM Languages (Java, Kotlin, Clojure)
+COPY tools/java/install/install.sh /tmp/install-java.sh
+RUN chmod +x /tmp/install-java.sh && /tmp/install-java.sh && rm /tmp/install-java.sh
+
+COPY tools/kotlin/install/install.sh /tmp/install-kotlin.sh
+RUN chmod +x /tmp/install-kotlin.sh && /tmp/install-kotlin.sh && rm /tmp/install-kotlin.sh
+
+COPY tools/clojure/install/install.sh /tmp/install-clojure.sh
+RUN chmod +x /tmp/install-clojure.sh && /tmp/install-clojure.sh && rm /tmp/install-clojure.sh
+
+# Stage 05: Python with ARM64 optimizations
+COPY tools/python/install/install.sh /tmp/install-python.sh
+COPY tools/python/install/nuitka.sh /tmp/install-nuitka.sh
+RUN chmod +x /tmp/install-python.sh /tmp/install-nuitka.sh && \
+    # Set Python build flags for ARM64
+    export PYTHON_CFLAGS="${OPTFLAGS}" && \
+    export PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" && \
+    /tmp/install-python.sh && \
+    /tmp/install-nuitka.sh && \
+    rm /tmp/install-python.sh /tmp/install-nuitka.sh
+
+# Stage 06: Clang/LLVM with ARM64 target
+COPY tools/clang/install/install.sh /tmp/install-clang.sh
+RUN chmod +x /tmp/install-clang.sh && \
+    # Install LLVM with ARM64 as default target
+    LLVM_TARGETS="AArch64;X86" /tmp/install-clang.sh && \
+    rm /tmp/install-clang.sh
+
+# Stage 07: Rust with ARM64 optimizations
+COPY tools/rust/install/install.sh /tmp/install-rust.sh
+RUN chmod +x /tmp/install-rust.sh && \
+    # Install Rust with Cortex-A78 optimizations
+    RUST_TARGET="aarch64-unknown-linux-gnu" \
+    RUSTFLAGS="-C target-cpu=cortex-a78 -C opt-level=3" \
+    /tmp/install-rust.sh && \
+    rm /tmp/install-rust.sh
+
+# Stage 08: Node.js
+COPY tools/nodejs/install/install.sh /tmp/install-nodejs.sh
+RUN chmod +x /tmp/install-nodejs.sh && /tmp/install-nodejs.sh && rm /tmp/install-nodejs.sh
+
+# Stage 09: Build tools (Maven, Gradle)
+COPY tools/build-tools/maven/install/install.sh /tmp/install-maven.sh
+COPY tools/build-tools/gradle/install/install.sh /tmp/install-gradle.sh
+RUN chmod +x /tmp/install-maven.sh /tmp/install-gradle.sh && \
+    /tmp/install-maven.sh && \
+    /tmp/install-gradle.sh && \
+    rm /tmp/install-maven.sh /tmp/install-gradle.sh
+
+# Stage 10: Web tools and package managers
+COPY tools/package-managers/install/install.sh /tmp/install-package-managers.sh
+COPY tools/web-tools/install/install.sh /tmp/install-web-tools.sh
+COPY tools/typescript/install/install.sh /tmp/install-typescript.sh
+RUN chmod +x /tmp/install-package-managers.sh /tmp/install-web-tools.sh /tmp/install-typescript.sh && \
+    /tmp/install-package-managers.sh && \
+    /tmp/install-web-tools.sh && \
+    /tmp/install-typescript.sh && \
+    rm /tmp/install-*.sh
+
+# Stage 11: Final setup
+COPY scripts/check_versions.sh /scripts/check_versions.sh
+RUN chmod +x /scripts/check_versions.sh
+
+# Create workspace directory
+RUN mkdir -p /workspace && \
+    chown -R developer:developer /workspace
+
+# Switch to non-root user
+USER developer
+WORKDIR /workspace
+
+# Set final environment
+ENV PATH="/home/developer/.local/bin:${PATH}" \
+    DOCKER_ARCH="arm64" \
+    DOCKER_PLATFORM="linux/arm64" \
+    OPTIMIZATION_TARGET="cortex-a78"
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python3 --version && node --version && rustc --version || exit 1
+
+# Labels
+LABEL maintainer="Jettison Team" \
+      version="arm64-optimized" \
+      description="Jon-Babylon polyglot development image optimized for NVIDIA AGX Orin" \
+      target.platform="linux/arm64" \
+      target.hardware="NVIDIA AGX Orin" \
+      target.cpu="ARM Cortex-A78AE" \
+      optimization.flags="${OPTFLAGS}"
+
+# Default command
+CMD ["/bin/bash"]
