@@ -4,10 +4,10 @@ A universal polyglot Docker image (`jon-babylon`) containing all language toolch
 
 ## 🎯 Target Platforms
 
-**Primary**: Ubuntu 22.04 ARM64 (Generic for CI/CD builds)
-**Secondary**: Ubuntu 22.04 AMD64 (Development and testing)
+- **ARM64**: Ubuntu 22.04 ARM64
+- **AMD64**: Ubuntu 22.04 AMD64
 
-> **Note**: For production deployment on NVIDIA AGX Orin, the image can be rebuilt locally with specific Cortex-A78 optimizations using build flags.
+> **Note**: Both ARM64 and AMD64 variants are supported with equal priority.
 
 ## 🎯 Purpose
 
@@ -75,7 +75,7 @@ Provides a consistent, reproducible development environment with all necessary c
 docker pull ghcr.io/lpportorino/jon-babylon:latest
 
 # Architecture-specific
-docker pull ghcr.io/lpportorino/jon-babylon:latest-arm64  # NVIDIA Orin
+docker pull ghcr.io/lpportorino/jon-babylon:latest-arm64  # ARM64
 docker pull ghcr.io/lpportorino/jon-babylon:latest-amd64  # Testing
 ```
 
@@ -149,17 +149,15 @@ docker run --rm -v $(pwd):/workspace -w /workspace \
 
 ## 🏗️ Architecture Support
 
-### Primary Target
+### ARM64 Target
 - **Platform**: ARM64/aarch64
 - **Build Runner**: `ubuntu-22.04-arm` (GitHub Actions)
-- **Optimization**: Generic ARM64 (`-O3`)
-- **Production Note**: For NVIDIA AGX Orin deployment, rebuild locally with `-march=armv8.2-a -mtune=cortex-a78`
+- **Optimization**: Standard (`-O3`)
 
-### Secondary Target (Development/Testing)
+### AMD64 Target
 - **Platform**: x86_64/amd64
-- **Hardware**: Development workstations
 - **Build Runner**: `ubuntu-22.04` (GitHub Actions)
-- **Purpose**: Local development and testing only
+- **Optimization**: Standard (`-O3`)
 
 Both architectures are built in parallel using a unified GitHub Actions workflow with matrix strategy and pushed to GitHub Container Registry with architecture-specific tags.
 
@@ -195,10 +193,10 @@ make help
 # Build for current architecture
 make build
 
-# Build optimized for NVIDIA Orin (ARM64)
+# Build for ARM64
 make build-arm64
 
-# Build for AMD64 (testing only)
+# Build for AMD64
 make build-amd64
 
 # Build both architectures
@@ -210,16 +208,11 @@ make test
 
 ### Manual Build
 ```bash
-# Build for ARM64 (generic)
+# Build for ARM64
 docker buildx build --platform linux/arm64 \
   -t jon-babylon:arm64 -f Dockerfile.arm64 .
 
-# Build for ARM64 with NVIDIA Orin optimizations (local production)
-docker buildx build --platform linux/arm64 \
-  --build-arg OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78" \
-  -t jon-babylon:arm64-orin -f Dockerfile.arm64 .
-
-# Build for x86_64 (testing only)
+# Build for x86_64
 docker build -t jon-babylon:x86_64 -f Dockerfile.x86_64 .
 ```
 
@@ -273,8 +266,8 @@ The images are built in parallel using a matrix strategy in a single workflow:
 
 ### Base Image
 - **OS**: Ubuntu 22.04 LTS
-- **Primary Architecture**: ARM64 (generic)
-- **Secondary Architecture**: AMD64 (for testing)
+- **ARM64**: Generic ARM64 architecture
+- **AMD64**: Generic x86_64 architecture
 
 ### Image Metrics
 - **Size**: ~2.5-3GB compressed
@@ -288,7 +281,7 @@ ghcr.io/lpportorino/jon-babylon:latest
 
 # Architecture-specific tags
 ghcr.io/lpportorino/jon-babylon:latest-arm64    # Generic ARM64
-ghcr.io/lpportorino/jon-babylon:latest-amd64    # Testing only
+ghcr.io/lpportorino/jon-babylon:latest-amd64    # AMD64
 
 # Version tags
 ghcr.io/lpportorino/jon-babylon:2024.01.15      # Date-based
@@ -354,7 +347,7 @@ jettison-stack-of-babel/
 │   └── check_versions.sh
 ├── .github/workflows/
 │   └── build.yml        # Unified multi-arch build with matrix strategy
-├── Dockerfile.arm64     # ARM64 specific build (NVIDIA Orin optimized)
+├── Dockerfile.arm64     # ARM64 specific build
 └── Dockerfile.x86_64    # x86_64 specific build
 ```
 
@@ -389,4 +382,4 @@ docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
   /scripts/check_versions.sh --licenses  # Note: --licenses flag would need to be implemented
 ```
 
-**Note**: This image is designed for the Jettison project's specific needs but can be used for any polyglot development requiring these tools. For production deployment on specific hardware (e.g., NVIDIA AGX Orin), consider rebuilding with appropriate optimization flags.
+**Note**: This image is designed for the Jettison project's specific needs but can be used for any polyglot development requiring these tools.

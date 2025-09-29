@@ -1,6 +1,5 @@
 # Jon-Babylon Docker Image Makefile
-# Primary Target: Ubuntu 22.04 ARM64 (NVIDIA AGX Orin)
-# Secondary: AMD64 for local development/testing
+# Targets: Ubuntu 22.04 ARM64 and AMD64
 
 # Image configuration
 IMAGE_NAME := jon-babylon
@@ -24,10 +23,8 @@ else
     TAG_SUFFIX := amd64
 endif
 
-# NVIDIA Orin optimization flags for ARM64
-ARM64_FLAGS := --build-arg MARCH=armv8.2-a \
-               --build-arg MTUNE=cortex-a78 \
-               --build-arg OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78"
+# ARM64 optimization flags
+ARM64_FLAGS := --build-arg OPTFLAGS="-O3"
 
 # Build configuration
 DOCKER_BUILD := docker build
@@ -49,11 +46,11 @@ all: build
 # Help target
 help:
 	@echo "$(BLUE)Jon-Babylon Docker Image Builder$(NC)"
-	@echo "$(GREEN)Primary Target: ARM64 (NVIDIA AGX Orin)$(NC)"
+	@echo "$(GREEN)Supported Targets: ARM64 and AMD64$(NC)"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  $(YELLOW)make build$(NC)        - Build for current architecture ($(ARCH))"
-	@echo "  $(YELLOW)make build-arm64$(NC)  - Build optimized for NVIDIA Orin (ARM64)"
+	@echo "  $(YELLOW)make build-arm64$(NC)  - Build for ARM64"
 	@echo "  $(YELLOW)make build-amd64$(NC)  - Build for AMD64 (testing only)"
 	@echo "  $(YELLOW)make build-multi$(NC)  - Build for both architectures"
 	@echo "  $(YELLOW)make test$(NC)         - Run comprehensive test suite"
@@ -69,7 +66,7 @@ help:
 build:
 	@echo "$(BLUE)Building $(IMAGE_NAME) for $(PLATFORM)...$(NC)"
 	@if [ "$(ARCH)" = "aarch64" ] || [ "$(ARCH)" = "arm64" ]; then \
-		echo "$(GREEN)Building with NVIDIA Orin optimizations...$(NC)"; \
+		echo "$(GREEN)Building for ARM64...$(NC)"; \
 		$(DOCKER_BUILD) $(ARM64_FLAGS) \
 			-f $(DOCKERFILE) \
 			-t $(IMAGE_NAME):latest \
@@ -86,12 +83,9 @@ build:
 			.; \
 	fi
 
-# Build specifically for ARM64 (NVIDIA Orin)
+# Build specifically for ARM64
 build-arm64: check-buildx
-	@echo "$(GREEN)Building optimized for NVIDIA AGX Orin (ARM64)...$(NC)"
-	@echo "Target specs:"
-	@echo "  - 8/12-core ARM Cortex-A78AE v8.2 64-bit"
-	@echo "  - Optimization: -march=armv8.2-a -mtune=cortex-a78"
+	@echo "$(GREEN)Building for ARM64...$(NC)"
 	$(DOCKER_BUILDX) \
 		--platform linux/arm64 \
 		$(ARM64_FLAGS) \
@@ -117,8 +111,8 @@ build-amd64: check-buildx
 # Build for both architectures
 build-multi: check-buildx
 	@echo "$(BLUE)Building multi-architecture images...$(NC)"
-	@echo "$(GREEN)Primary: ARM64 (NVIDIA Orin)$(NC)"
-	@echo "$(YELLOW)Secondary: AMD64 (testing)$(NC)"
+	@echo "$(GREEN)ARM64$(NC)"
+	@echo "$(YELLOW)AMD64$(NC)"
 	$(DOCKER_BUILDX) \
 		--platform linux/arm64,linux/amd64 \
 		-f docker/Dockerfile \
@@ -149,18 +143,18 @@ test-arm64:
 		bash -c "echo 'Checking CPU features...'; \
 		         cat /proc/cpuinfo | grep Features | head -1; \
 		         echo 'Testing compiler optimizations...'; \
-		         gcc -march=armv8.2-a -mtune=cortex-a78 -E -v - </dev/null 2>&1 | grep march"
+		         gcc -O3 -E -v - </dev/null 2>&1 | grep O3"
 
 # Push images to registry
 push: check-auth
 	@echo "$(BLUE)Pushing images to $(REGISTRY)...$(NC)"
 	@if [ "$(ARCH)" = "aarch64" ] || [ "$(ARCH)" = "arm64" ]; then \
-		echo "$(GREEN)Pushing ARM64 image (primary)...$(NC)"; \
+		echo "$(GREEN)Pushing ARM64 image...$(NC)"; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):latest-arm64; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):$(VERSION)-arm64; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):$(GIT_SHA)-arm64; \
 	else \
-		echo "$(YELLOW)Pushing AMD64 image (testing)...$(NC)"; \
+		echo "$(YELLOW)Pushing AMD64 image...$(NC)"; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):latest-amd64; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):$(VERSION)-amd64; \
 		docker push $(REGISTRY)/$(IMAGE_NAME):$(GIT_SHA)-amd64; \
@@ -207,32 +201,25 @@ info:
 	@echo "$(BLUE)Image Size:$(NC)"
 	@docker images --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}" | grep $(IMAGE_NAME) || echo "No images found"
 
-# Staged build (using the staged build system)
-build-staged:
-	@echo "$(BLUE)Running staged build...$(NC)"
-	@./scripts/build-staged.sh
+# Build with script
+build-script:
+	@echo "$(BLUE)Running build script...$(NC)"
+	@./build-local.sh
 
 # Version check
 versions:
 	@echo "$(BLUE)Checking tool versions in image...$(NC)"
 	@docker run --rm $(IMAGE_NAME):latest /scripts/check_versions.sh
 
-# NVIDIA Orin specific info
-orin-info:
-	@echo "$(GREEN)NVIDIA AGX Orin Target Information:$(NC)"
+# Architecture info
+arch-info:
+	@echo "$(GREEN)Architecture Information:$(NC)"
 	@echo ""
-	@echo "Supported Configurations:"
-	@echo "  1. Orin NX:"
-	@echo "     - 8-core ARM Cortex-A78AE v8.2 64-bit CPU"
-	@echo "     - 2MB L2 + 4MB L3 cache"
+	@echo "Supported Architectures:"
+	@echo "  - ARM64 (aarch64)"
+	@echo "  - AMD64 (x86_64)"
 	@echo ""
-	@echo "  2. Orin AGX:"
-	@echo "     - 12-core ARM Cortex-A78AE v8.2 64-bit CPU"
-	@echo "     - 3MB L2 + 6MB L3 cache"
-	@echo ""
-	@echo "Optimization Flags:"
-	@echo "  - Architecture: ARMv8.2-A"
-	@echo "  - Tuning: Cortex-A78"
-	@echo "  - Compiler: -O3 -march=armv8.2-a -mtune=cortex-a78"
+	@echo "Build Optimization:"
+	@echo "  - Compiler: -O3"
 
 .DEFAULT_GOAL := help

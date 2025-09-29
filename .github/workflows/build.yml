@@ -39,11 +39,9 @@ jobs:
             runner: ubuntu-22.04-arm
             platform: linux/arm64
             dockerfile: Dockerfile.arm64
-            description: "ARM64 - NVIDIA Orin Optimized"
+            description: "ARM64"
             build-args: |
-              MARCH=armv8.2-a
-              MTUNE=cortex-a78
-              OPTFLAGS=-O3 -march=armv8.2-a -mtune=cortex-a78
+              OPTFLAGS=-O3
 
     steps:
       - name: Checkout repository

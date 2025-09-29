@@ -1,7 +1,7 @@
 #!/bin/bash
 # Enhanced Jon-Babylon Build Script with Comprehensive Logging
 # Creates detailed log files for each build stage and test
-# Works on both PC (AMD64) and NVIDIA Orin (ARM64)
+# Works on both AMD64 and ARM64 architectures
 
 set -e
 
@@ -140,12 +140,12 @@ build_image() {
     if [ "$arch" = "arm64" ]; then
         dockerfile="Dockerfile.arm64"
         platform="linux/arm64"
-        optimization="--build-arg MARCH=armv8.2-a --build-arg MTUNE=cortex-a78"
-        print_msg "$GREEN" "Building for ARM64 (NVIDIA Orin Primary Target)"
+        optimization="--build-arg OPTFLAGS=-O3"
+        print_msg "$GREEN" "Building for ARM64"
     else
         dockerfile="Dockerfile.x86_64"
         platform="linux/amd64"
-        print_msg "$YELLOW" "Building for AMD64 (Testing/Development)"
+        print_msg "$YELLOW" "Building for AMD64"
     fi
 
     # Check if Dockerfile exists
