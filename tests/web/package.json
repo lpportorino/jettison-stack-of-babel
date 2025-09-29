@@ -1,0 +1,43 @@
+{
+  "name": "jon-babylon-web-test",
+  "version": "1.0.0",
+  "description": "Minimal web test project for jon-babylon Docker image",
+  "type": "module",
+  "scripts": {
+    "build": "bun run build:ts && bun run build:bundle",
+    "build:ts": "tsc --noEmit",
+    "build:bundle": "esbuild src/app.ts --bundle --minify --sourcemap --target=es2022 --format=esm --outfile=dist/app.js",
+    "build:localize": "lit-localize build",
+    "lint": "eslint 'src/**/*.{ts,js}'",
+    "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
+    "format": "prettier --write 'src/**/*.{ts,js,json}'",
+    "format:check": "prettier --check 'src/**/*.{ts,js,json}'",
+    "test": "bun run build && bun run lint && bun run format:check",
+    "dev": "esbuild src/app.ts --bundle --sourcemap --target=es2022 --format=esm --outfile=dist/app.js --watch"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.9.0",
+    "@lit/localize": "^0.12.2",
+    "@lit-labs/signals": "^0.1.3",
+    "chroma-js": "^3.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lit": "^3.3.1",
+    "signal-polyfill": "^0.2.2",
+    "twind": "^0.16.19"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@lit/localize-tools": "^0.8.0",
+    "@types/chroma-js": "^2.4.5",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "esbuild": "^0.21.5",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-lit": "^2.1.1",
+    "eslint-plugin-unused-imports": "^4.2.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  }
+}

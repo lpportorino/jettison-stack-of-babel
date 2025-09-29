@@ -1,59 +1,341 @@
-# Build artifacts
+# ============================================================================
+# Build Artifacts & Outputs
+# ============================================================================
 *.tar
 *.tar.gz
 *.zip
+*.7z
+*.deb
+*.rpm
+*.dmg
+*.pkg
+*.iso
 build/
 dist/
 target/
+out/
+bin/
 
-# Test outputs
+# ============================================================================
+# Test Outputs
+# ============================================================================
 test-results/
 test-reports/
+coverage/
+.coverage
+htmlcov/
 *.log
+*.test
+*.prof
+*.bench
 
-# IDE files
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+# IntelliJ IDEA
 .idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
 .vscode/
+*.code-workspace
+
+# Vim
 *.swp
 *.swo
+*.swn
 *~
+.*.swp
+Session.vim
+.netrwhist
 
-# OS files
+# Emacs
+*~
+\#*\#
+.\#*
+.emacs.desktop
+.emacs.desktop.lock
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# OS Files
+# ============================================================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
 
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ============================================================================
 # Docker
+# ============================================================================
 .docker/
+*.dockerignore.local
+docker-compose.override.yml
+docker-compose.local.yml
 
-# Temporary files
+# ============================================================================
+# Temporary Files
+# ============================================================================
 tmp/
 temp/
 *.tmp
 *.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
 
-# Python
+# ============================================================================
+# Language-Specific: Python
+# ============================================================================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
 venv/
 .venv/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.nox/
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
+*.manifest
+*.spec
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
 
-# Node.js
+# Nuitka
+*.build/
+*.dist/
+*.onefile-build/
+
+# ============================================================================
+# Language-Specific: JavaScript/Node.js
+# ============================================================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.npm
+.yarn/
+.pnpm-store/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.env.local
+.env.*.local
+.vercel
+.turbo/
 
-# Java
+# ============================================================================
+# Language-Specific: Java/Kotlin
+# ============================================================================
 *.class
 *.jar
 *.war
 *.ear
+*.nar
 hs_err_pid*
+replay_pid*
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+.m2/
+.mvn/
+mvnw
+mvnw.cmd
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+.flattened-pom.xml
+.project
+.classpath
+.settings/
+.factorypath
 
-# Clojure
+# ============================================================================
+# Language-Specific: Clojure
+# ============================================================================
 .lein-*
 .nrepl-port
+.cpcache/
+.clj-kondo/
+.lsp/
+.calva/
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/lib/
+/classes/
+/target/
+/checkouts/
+profiles.clj
+
+# ============================================================================
+# Language-Specific: Rust
+# ============================================================================
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+# Don't ignore for libraries
+# Cargo.lock
+
+# ============================================================================
+# Language-Specific: C/C++
+# ============================================================================
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lib
+*.exe
+*.out
+*.app
+*.dSYM/
+*.su
+*.idb
+*.pdb
+*.ilk
+*.map
+*.exp
+*.gch
+*.pch
+.ccls-cache/
+compile_commands.json
+
+# ============================================================================
+# Build Tools
+# ============================================================================
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+cmake-build-*/
+CTestTestfile.cmake
+_deps/
+
+# Make
+Makefile.in
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+/stamp-h1
+
+# ============================================================================
+# Certificates & Secrets
+# ============================================================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+!.env.template
+secrets/
+credentials/
+*.secret
+
+# ============================================================================
+# Logs & Databases
+# ============================================================================
+logs/
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+*.accdb
+
+# ============================================================================
+# Archives (uncomment if needed)
+# ============================================================================
+# *.7z
+# *.dmg
+# *.gz
+# *.iso
+# *.jar
+# *.rar
+# *.tar
+# *.zip
+
+# ============================================================================
+# Project-Specific
+# ============================================================================
+# Add any project-specific ignores here

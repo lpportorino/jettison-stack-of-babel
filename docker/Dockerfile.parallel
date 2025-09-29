@@ -1,0 +1,231 @@
+# True Parallel Build Dockerfile for Jon-Babylon
+# Uses multi-stage builds with COPY to achieve parallel tool installation
+
+# ============================================================================
+# Base image used by all builders
+# ============================================================================
+FROM ubuntu:22.04 AS base-for-builders
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        curl wget git ca-certificates gnupg lsb-release \
+        software-properties-common build-essential make cmake \
+        pkg-config libssl-dev libffi-dev zlib1g-dev \
+        locales tzdata && \
+    locale-gen en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+
+# ============================================================================
+# PARALLEL BUILDERS - These can run simultaneously
+# ============================================================================
+
+# Python Builder (builds in isolation)
+FROM base-for-builders AS python-builder
+WORKDIR /build
+COPY tools/python/install/install.sh .
+RUN apt-get update && \
+    apt-get install -y libbz2-dev libreadline-dev libsqlite3-dev \
+        libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
+        libffi-dev liblzma-dev && \
+    # Install Python to /opt/python
+    git clone https://github.com/pyenv/pyenv.git /opt/pyenv && \
+    PYENV_ROOT=/opt/pyenv PATH=/opt/pyenv/bin:$PATH \
+    pyenv install 3.13.1 && \
+    PYENV_ROOT=/opt/pyenv PATH=/opt/pyenv/bin:$PATH \
+    pyenv global 3.13.1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Rust Builder (builds in isolation)
+FROM base-for-builders AS rust-builder
+WORKDIR /build
+ENV RUSTUP_HOME=/opt/rustup
+ENV CARGO_HOME=/opt/cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --profile minimal \
+    --no-modify-path && \
+    /opt/cargo/bin/cargo install cargo-watch cargo-edit
+
+# Node.js Builder (builds in isolation)
+FROM base-for-builders AS node-builder
+WORKDIR /build
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    # Install global packages to /opt/node
+    npm config set prefix /opt/node && \
+    npm install -g typescript esbuild prettier eslint \
+        @lit/localize @lit/localize-tools \
+        yarn pnpm && \
+    rm -rf /var/lib/apt/lists/*
+
+# Go Builder (example of adding another language)
+FROM base-for-builders AS go-builder
+WORKDIR /build
+RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar -C /opt -xzf go1.23.0.linux-amd64.tar.gz && \
+    rm go1.23.0.linux-amd64.tar.gz
+
+# Clang Builder (builds in isolation)
+FROM base-for-builders AS clang-builder
+WORKDIR /build
+RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
+    add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" && \
+    apt-get update && \
+    apt-get install -y clang-21 clang-tools-21 lldb-21 lld-21 && \
+    rm -rf /var/lib/apt/lists/*
+
+# ============================================================================
+# SEQUENTIAL BASE - Java ecosystem (must be sequential due to dependencies)
+# ============================================================================
+FROM ubuntu:22.04 AS jvm-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# System setup
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        curl wget git vim nano \
+        ca-certificates gnupg lsb-release \
+        software-properties-common \
+        locales tzdata sudo \
+        build-essential make cmake pkg-config \
+        zip unzip && \
+    locale-gen en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Install Java (this must be in the base)
+RUN wget -qO- https://packages.adoptium.net/artifactory/api/gpg/key/public | \
+    gpg --dearmor > /usr/share/keyrings/adoptium.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] \
+        https://packages.adoptium.net/artifactory/deb jammy main" | \
+    tee /etc/apt/sources.list.d/adoptium.list && \
+    apt-get update && \
+    apt-get install -y temurin-21-jdk && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# Install Kotlin (depends on Java)
+RUN cd /tmp && \
+    wget https://github.com/JetBrains/kotlin/releases/download/v2.1.0/kotlin-compiler-2.1.0.zip && \
+    unzip kotlin-compiler-2.1.0.zip && \
+    mv kotlinc /opt/kotlin && \
+    rm kotlin-compiler-2.1.0.zip
+
+ENV PATH=/opt/kotlin/bin:$PATH
+
+# Install Clojure (depends on Java)
+RUN curl -L -O https://github.com/clojure/brew-install/releases/download/1.12.0.1479/linux-install.sh && \
+    chmod +x linux-install.sh && \
+    ./linux-install.sh && \
+    rm linux-install.sh
+
+# Install build tools (Maven, Gradle)
+RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.10/binaries/apache-maven-3.9.10-bin.tar.gz && \
+    tar -xzf apache-maven-3.9.10-bin.tar.gz -C /opt && \
+    mv /opt/apache-maven-3.9.10 /opt/maven && \
+    rm apache-maven-3.9.10-bin.tar.gz && \
+    \
+    wget https://services.gradle.org/distributions/gradle-8.12-bin.zip && \
+    unzip -q gradle-8.12-bin.zip -C /opt && \
+    mv /opt/gradle-8.12 /opt/gradle && \
+    rm gradle-8.12-bin.zip
+
+ENV MAVEN_HOME=/opt/maven
+ENV GRADLE_HOME=/opt/gradle
+ENV PATH=$MAVEN_HOME/bin:$GRADLE_HOME/bin:$PATH
+
+# ============================================================================
+# FINAL ASSEMBLY - Combine everything using COPY
+# ============================================================================
+FROM jvm-base AS final
+
+# Copy Python from builder
+COPY --from=python-builder /opt/pyenv /opt/pyenv
+ENV PYENV_ROOT=/opt/pyenv
+ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# Copy Rust from builder
+COPY --from=rust-builder /opt/rustup /opt/rustup
+COPY --from=rust-builder /opt/cargo /opt/cargo
+ENV RUSTUP_HOME=/opt/rustup
+ENV CARGO_HOME=/opt/cargo
+ENV PATH=$CARGO_HOME/bin:$PATH
+
+# Copy Node.js from builder
+COPY --from=node-builder /usr/bin/node /usr/bin/node
+COPY --from=node-builder /usr/bin/npm /usr/bin/npm
+COPY --from=node-builder /usr/lib/node_modules /usr/lib/node_modules
+COPY --from=node-builder /opt/node /opt/node
+ENV PATH=/opt/node/bin:$PATH
+
+# Copy Go from builder (example)
+COPY --from=go-builder /opt/go /opt/go
+ENV PATH=/opt/go/bin:$PATH
+
+# Copy Clang from builder
+COPY --from=clang-builder /usr/bin/clang-21 /usr/bin/clang
+COPY --from=clang-builder /usr/bin/clang++-21 /usr/bin/clang++
+COPY --from=clang-builder /usr/lib/llvm-21 /usr/lib/llvm-21
+
+# Install Bun (small, so we do it here)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
+
+# Install Leiningen
+RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /usr/local/bin/lein && \
+    chmod +x /usr/local/bin/lein && \
+    LEIN_ROOT=true lein version
+
+# Create non-root user
+RUN useradd -m -s /bin/bash developer && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Copy test scripts
+COPY scripts/check_versions.sh /scripts/
+RUN chmod +x /scripts/check_versions.sh
+
+# Set up workspace
+WORKDIR /workspace
+RUN chown developer:developer /workspace
+
+# Verify everything works
+RUN echo "=== Version Check ===" && \
+    java -version && \
+    kotlin -version && \
+    clojure --version && \
+    python3 --version && \
+    rustc --version && \
+    node --version && \
+    go version && \
+    clang --version && \
+    bun --version
+
+# Final cleanup
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s \
+    CMD java -version && python3 --version && node --version && rustc --version
+
+# Switch to non-root user
+USER developer
+
+# Labels
+LABEL maintainer="Jettison Team"
+LABEL description="Jon-Babylon: Parallel-built polyglot environment"
+LABEL version="2025.01-parallel"
+
+CMD ["/bin/bash"]

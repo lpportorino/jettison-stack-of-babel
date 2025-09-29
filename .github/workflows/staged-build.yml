@@ -1,0 +1,306 @@
+name: Staged Build Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker/**'
+      - 'tools/**'
+      - 'tests/**'
+      - 'scripts/**'
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *'  # Daily builds
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: 'Build without cache'
+        required: false
+        default: false
+        type: boolean
+      push_intermediate:
+        description: 'Push intermediate images'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/jon-babylon
+
+jobs:
+  # Stage 00: Base
+  stage-00-base:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Stage 00 - Base
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/stages/00-base.Dockerfile
+          tags: jon-babylon:00-base
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker
+
+      - name: Test Stage 00
+        run: |
+          chmod +x docker/tests/test-stage.sh
+          ./docker/tests/test-stage.sh 00 base
+
+      - name: Save image
+        run: |
+          docker save jon-babylon:00-base | gzip > stage-00.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: stage-00-base
+          path: stage-00.tar.gz
+
+  # Stage 01: Build Essentials
+  stage-01-build-essentials:
+    needs: stage-00-base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download previous stage
+        uses: actions/download-artifact@v3
+        with:
+          name: stage-00-base
+
+      - name: Load previous stage
+        run: |
+          docker load < stage-00.tar.gz
+
+      - name: Build Stage 01 - Build Essentials
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE=jon-babylon:00-base \
+            -t jon-babylon:01-build-essentials \
+            -f docker/stages/01-build-essentials.Dockerfile .
+
+      - name: Test Stage 01
+        run: |
+          chmod +x docker/tests/test-stage.sh
+          ./docker/tests/test-stage.sh 01 build-essentials
+
+      - name: Save image
+        run: |
+          docker save jon-babylon:01-build-essentials | gzip > stage-01.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: stage-01-build-essentials
+          path: stage-01.tar.gz
+
+  # Stage 02: Java
+  stage-02-java:
+    needs: stage-01-build-essentials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download previous stage
+        uses: actions/download-artifact@v3
+        with:
+          name: stage-01-build-essentials
+
+      - name: Load previous stage
+        run: |
+          docker load < stage-01.tar.gz
+
+      - name: Build Stage 02 - Java
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE=jon-babylon:01-build-essentials \
+            -t jon-babylon:02-java \
+            -f docker/stages/02-java.Dockerfile .
+
+      - name: Test Stage 02
+        run: |
+          chmod +x docker/tests/test-stage.sh
+          ./docker/tests/test-stage.sh 02 java
+
+      - name: Save image
+        run: |
+          docker save jon-babylon:02-java | gzip > stage-02.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: stage-02-java
+          path: stage-02.tar.gz
+
+  # Parallel language installations (stages 3-8)
+  parallel-languages:
+    needs: stage-02-java
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stage:
+          - { num: "03", name: "kotlin" }
+          - { num: "04", name: "clojure" }
+          - { num: "05", name: "python" }
+          - { num: "06", name: "clang" }
+          - { num: "07", name: "rust" }
+          - { num: "08", name: "nodejs" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Java stage
+        uses: actions/download-artifact@v3
+        with:
+          name: stage-02-java
+
+      - name: Load base image
+        run: |
+          docker load < stage-02.tar.gz
+          # For stages after 03, we need to load all previous parallel stages
+          # This is simplified - in practice, you'd chain them properly
+
+      - name: Build Stage ${{ matrix.stage.num }} - ${{ matrix.stage.name }}
+        run: |
+          # Determine base image
+          if [ "${{ matrix.stage.num }}" == "03" ]; then
+            BASE_IMAGE="jon-babylon:02-java"
+          else
+            # For parallel builds, we'd need to handle this differently
+            # This is a simplified version
+            PREV_NUM=$(printf "%02d" $((${{ matrix.stage.num }} - 1)))
+            PREV_NAME=$(echo "java kotlin clojure python clang rust nodejs" | cut -d' ' -f$((${{ matrix.stage.num }} - 1)))
+            BASE_IMAGE="jon-babylon:${PREV_NUM}-${PREV_NAME}"
+          fi
+
+          docker build \
+            --build-arg BASE_IMAGE=$BASE_IMAGE \
+            -t jon-babylon:${{ matrix.stage.num }}-${{ matrix.stage.name }} \
+            -f docker/stages/${{ matrix.stage.num }}-${{ matrix.stage.name }}.Dockerfile .
+
+      - name: Test Stage ${{ matrix.stage.num }}
+        run: |
+          chmod +x docker/tests/test-stage.sh
+          ./docker/tests/test-stage.sh ${{ matrix.stage.num }} ${{ matrix.stage.name }}
+
+      - name: Save image
+        run: |
+          docker save jon-babylon:${{ matrix.stage.num }}-${{ matrix.stage.name }} | \
+            gzip > stage-${{ matrix.stage.num }}.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: stage-${{ matrix.stage.num }}-${{ matrix.stage.name }}
+          path: stage-${{ matrix.stage.num }}.tar.gz
+
+  # Final stages and assembly
+  final-build:
+    needs: parallel-languages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Load all stages
+        run: |
+          for stage in stage-*/; do
+            echo "Loading $stage"
+            docker load < $stage/*.tar.gz
+          done
+
+      - name: Build remaining stages (09-11)
+        run: |
+          # Build stage 09 - Build Tools
+          docker build \
+            --build-arg BASE_IMAGE=jon-babylon:08-nodejs \
+            -t jon-babylon:09-build-tools \
+            -f docker/stages/09-build-tools.Dockerfile .
+
+          # Test stage 09
+          chmod +x docker/tests/test-stage.sh
+          ./docker/tests/test-stage.sh 09 build-tools
+
+          # Build stage 10 - Web Tools
+          docker build \
+            --build-arg BASE_IMAGE=jon-babylon:09-build-tools \
+            -t jon-babylon:10-web-tools \
+            -f docker/stages/10-web-tools.Dockerfile .
+
+          # Test stage 10
+          ./docker/tests/test-stage.sh 10 web-tools
+
+          # Build stage 11 - Final
+          docker build \
+            --build-arg BASE_IMAGE=jon-babylon:10-web-tools \
+            -t jon-babylon:11-final \
+            -f docker/stages/11-final.Dockerfile .
+
+          # Test stage 11
+          ./docker/tests/test-stage.sh 11 final
+
+      - name: Run comprehensive tests
+        run: |
+          docker run --rm jon-babylon:11-final /scripts/check_versions.sh
+
+      - name: Tag final image
+        run: |
+          docker tag jon-babylon:11-final ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker tag jon-babylon:11-final ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker tag jon-babylon:11-final ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(date +%Y.%m.%d)
+
+      - name: Push to registry
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(date +%Y.%m.%d)
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: spdx-json
+
+      - name: Security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
