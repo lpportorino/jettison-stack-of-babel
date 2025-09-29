@@ -2,15 +2,16 @@
 
 A universal polyglot Docker image (`jon-babylon`) containing all language toolchains and development tools for the Jettison project. Named after the Tower of Babel for its extreme multilingual capabilities.
 
-## 🎯 Primary Target Platform
+## 🎯 Target Platforms
 
-**Ubuntu 22.04 ARM64 on NVIDIA AGX Orin**
+**Primary**: Ubuntu 22.04 ARM64 (Generic for CI/CD builds)
+**Secondary**: Ubuntu 22.04 AMD64 (Development and testing)
 
-> **Note**: The AMD64 variant is provided for local development and testing only. All optimizations target ARM64 architecture.
+> **Note**: For production deployment on NVIDIA AGX Orin, the image can be rebuilt locally with specific Cortex-A78 optimizations using build flags.
 
 ## 🎯 Purpose
 
-Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally. The image is optimized for ARM64 execution on NVIDIA Orin platforms.
+Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally.
 
 ## 🛠️ Detailed Tool Inventory
 
@@ -148,11 +149,11 @@ docker run --rm -v $(pwd):/workspace -w /workspace \
 
 ## 🏗️ Architecture Support
 
-### Primary Target (Production)
+### Primary Target
 - **Platform**: ARM64/aarch64
-- **Hardware**: NVIDIA AGX Orin
 - **Build Runner**: `ubuntu-22.04-arm` (GitHub Actions)
-- **Optimization**: `-march=armv8.2-a -mtune=cortex-a78`
+- **Optimization**: Generic ARM64 (`-O3`)
+- **Production Note**: For NVIDIA AGX Orin deployment, rebuild locally with `-march=armv8.2-a -mtune=cortex-a78`
 
 ### Secondary Target (Development/Testing)
 - **Platform**: x86_64/amd64
@@ -181,7 +182,7 @@ Both architectures are built in parallel using a unified GitHub Actions workflow
 The build scripts automatically:
 - Detects your architecture (ARM64 or AMD64)
 - Selects the appropriate Dockerfile
-- Applies optimizations (Cortex-A78 for NVIDIA Orin)
+- Applies optimization flags
 - Uses Docker Buildx if available
 - Runs basic validation tests
 - Shows build summary and usage instructions
@@ -209,11 +210,14 @@ make test
 
 ### Manual Build
 ```bash
-# Build for ARM64 with Orin optimizations
+# Build for ARM64 (generic)
 docker buildx build --platform linux/arm64 \
-  --build-arg MARCH=armv8.2-a \
-  --build-arg MTUNE=cortex-a78 \
   -t jon-babylon:arm64 -f Dockerfile.arm64 .
+
+# Build for ARM64 with NVIDIA Orin optimizations (local production)
+docker buildx build --platform linux/arm64 \
+  --build-arg OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78" \
+  -t jon-babylon:arm64-orin -f Dockerfile.arm64 .
 
 # Build for x86_64 (testing only)
 docker build -t jon-babylon:x86_64 -f Dockerfile.x86_64 .
@@ -235,8 +239,8 @@ The images are built in parallel using a matrix strategy in a single workflow:
 - **Strategy**: Matrix builds for both architectures
 - **ARM64 Configuration**:
   - Runner: `ubuntu-22.04-arm`
-  - Target: NVIDIA AGX Orin
-  - Optimizations: ARMv8.2-A with Cortex-A78 tuning
+  - Target: Generic ARM64
+  - Optimizations: Standard `-O3`
   - Tags: `latest-arm64`, `<version>-arm64`
 - **AMD64 Configuration**:
   - Runner: `ubuntu-22.04`
@@ -261,7 +265,7 @@ The images are built in parallel using a matrix strategy in a single workflow:
    - C/C++ tests (clang, clang-format, clang-tidy)
    - Node.js tests (npm, yarn, pnpm)
    - Web stack tests (TypeScript, ESLint, Prettier, esbuild)
-3. **Architecture-specific optimizations**: ARM64 builds include Cortex-A78 optimizations
+3. **Architecture-specific builds**: ARM64 and AMD64 built in parallel
 4. **Registry Push**: Push architecture-specific images (when not a PR)
 5. **Manifest Creation**: Create multi-arch manifest linking both images
 
@@ -269,7 +273,7 @@ The images are built in parallel using a matrix strategy in a single workflow:
 
 ### Base Image
 - **OS**: Ubuntu 22.04 LTS
-- **Primary Architecture**: ARM64 (optimized for NVIDIA Orin)
+- **Primary Architecture**: ARM64 (generic)
 - **Secondary Architecture**: AMD64 (for testing)
 
 ### Image Metrics
@@ -283,7 +287,7 @@ The images are built in parallel using a matrix strategy in a single workflow:
 ghcr.io/lpportorino/jon-babylon:latest
 
 # Architecture-specific tags
-ghcr.io/lpportorino/jon-babylon:latest-arm64    # NVIDIA Orin optimized
+ghcr.io/lpportorino/jon-babylon:latest-arm64    # Generic ARM64
 ghcr.io/lpportorino/jon-babylon:latest-amd64    # Testing only
 
 # Version tags
@@ -346,7 +350,7 @@ jettison-stack-of-babel/
 │   ├── web/             # TypeScript + ESLint + Prettier
 │   └── ...
 ├── scripts/
-│   ├── build-staged.sh  # Staged build script
+│   ├── build.sh         # Build script
 │   └── check_versions.sh
 ├── .github/workflows/
 │   └── build.yml        # Unified multi-arch build with matrix strategy
@@ -385,4 +389,4 @@ docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
   /scripts/check_versions.sh --licenses  # Note: --licenses flag would need to be implemented
 ```
 
-**Note**: This image is optimized for the Jettison project's specific needs but can be used for any polyglot development requiring these tools.
+**Note**: This image is designed for the Jettison project's specific needs but can be used for any polyglot development requiring these tools. For production deployment on specific hardware (e.g., NVIDIA AGX Orin), consider rebuilding with appropriate optimization flags.

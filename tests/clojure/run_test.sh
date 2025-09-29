@@ -30,11 +30,15 @@ if [ -f project.clj ]; then
     lein run
 fi
 
-# Run linting with clj-kondo
+# Run linting with clj-kondo (if available)
 echo ""
 echo "Testing clj-kondo linting..."
-clj-kondo --version
-clojure -M:lint || clj-kondo --lint src --config '{:output {:format :compact}}' || true
+if command -v clj-kondo &> /dev/null; then
+    clj-kondo --version
+    clj-kondo --lint src --config '{:output {:format :compact}}' || true
+else
+    echo "clj-kondo not installed, skipping linting"
+fi
 
 # Run formatting check with cljfmt
 echo ""

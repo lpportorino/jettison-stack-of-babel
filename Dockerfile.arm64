@@ -1,14 +1,13 @@
-# Jon-Babylon Docker Image - ARM64 Optimized for NVIDIA AGX Orin
-# Target: Ubuntu 22.04 ARM64 on NVIDIA Orin (Cortex-A78AE)
+# Jon-Babylon Docker Image - ARM64
+# Target: Ubuntu 22.04 ARM64
 # Build with: make build-arm64
 
 # Use the staged build system
 FROM ubuntu:22.04 AS base
 
 # Build arguments for optimization
-ARG MARCH=armv8.2-a
-ARG MTUNE=cortex-a78
-ARG OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78"
+# Note: Generic ARM64 for CI builds, specific optimizations only for production
+ARG OPTFLAGS="-O3"
 
 # Set architecture-specific environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -18,13 +17,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CFLAGS="${OPTFLAGS}" \
     CXXFLAGS="${OPTFLAGS}" \
     LDFLAGS="-Wl,-O3" \
-    RUSTFLAGS="-C target-cpu=cortex-a78 -C opt-level=3" \
+    RUSTFLAGS="-C opt-level=3" \
     MAKEFLAGS="-j8"
 
 # Note about optimization
-RUN echo "Building optimized for NVIDIA AGX Orin (ARM Cortex-A78AE)" && \
-    echo "Architecture: ARMv8.2-A" && \
-    echo "CPU: Cortex-A78" && \
+RUN echo "Building ARM64 image" && \
+    echo "Architecture: $(uname -m)" && \
     echo "Optimizations: ${OPTFLAGS}"
 
 # Copy all stage dockerfiles and build scripts
@@ -113,9 +111,9 @@ RUN chmod +x /tmp/install-clang.sh && \
 # Stage 07: Rust with ARM64 optimizations
 COPY tools/rust/install/install.sh /tmp/install-rust.sh
 RUN chmod +x /tmp/install-rust.sh && \
-    # Install Rust with Cortex-A78 optimizations
+    # Install Rust for ARM64
     RUST_TARGET="aarch64-unknown-linux-gnu" \
-    RUSTFLAGS="-C target-cpu=cortex-a78 -C opt-level=3" \
+    RUSTFLAGS="-C opt-level=3" \
     /tmp/install-rust.sh && \
     rm /tmp/install-rust.sh
 
@@ -156,8 +154,7 @@ WORKDIR /workspace
 # Set final environment
 ENV PATH="/home/developer/.local/bin:${PATH}" \
     DOCKER_ARCH="arm64" \
-    DOCKER_PLATFORM="linux/arm64" \
-    OPTIMIZATION_TARGET="cortex-a78"
+    DOCKER_PLATFORM="linux/arm64"
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -165,11 +162,9 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Labels
 LABEL maintainer="Jettison Team" \
-      version="arm64-optimized" \
-      description="Jon-Babylon polyglot development image optimized for NVIDIA AGX Orin" \
+      version="arm64" \
+      description="Jon-Babylon polyglot development image for ARM64" \
       target.platform="linux/arm64" \
-      target.hardware="NVIDIA AGX Orin" \
-      target.cpu="ARM Cortex-A78AE" \
       optimization.flags="${OPTFLAGS}"
 
 # Default command

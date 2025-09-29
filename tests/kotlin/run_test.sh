@@ -14,13 +14,12 @@ echo "Kotlin version:"
 kotlin -version
 kotlinc -version
 
-# Compile with kotlinc
+# Test with Gradle (includes dependencies)
 echo ""
-echo "Compiling Kotlin with kotlinc..."
-kotlinc src/main/kotlin/Main.kt -include-runtime -d kotlin-test.jar
-
-echo "Running compiled Kotlin JAR..."
-java -jar kotlin-test.jar
+echo "Building and running Kotlin with Gradle..."
+gradle build --no-daemon
+echo "Running Kotlin application..."
+gradle run --no-daemon
 
 # Test ktlint linter
 echo ""

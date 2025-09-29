@@ -27,12 +27,10 @@ lein version
 
 # Install clj-kondo (linter)
 echo "=== Installing clj-kondo ==="
-CLJ_KONDO_VERSION="2025.07.28"
-curl -sL "https://github.com/clj-kondo/clj-kondo/releases/download/v${CLJ_KONDO_VERSION}/clj-kondo-${CLJ_KONDO_VERSION}-linux-amd64.zip" -o clj-kondo.zip
-unzip -q clj-kondo.zip -d /tmp
-mv /tmp/clj-kondo /usr/local/bin/
-chmod +x /usr/local/bin/clj-kondo
-rm clj-kondo.zip
+curl -sLO https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo
+chmod +x install-clj-kondo
+./install-clj-kondo
+rm install-clj-kondo
 
 # Install Babashka (useful for scripting)
 echo "=== Installing Babashka ==="

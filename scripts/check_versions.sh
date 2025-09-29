@@ -48,9 +48,12 @@ check_version "Node.js" "node --version" "22" || ((FAILURES++))
 check_version "TypeScript" "tsc --version" "5" || ((FAILURES++))
 echo ""
 
-echo -e "${YELLOW}Compilers:${NC}"
+echo -e "${YELLOW}Compilers & Linters:${NC}"
 check_version "Clang" "clang --version" "21" || ((FAILURES++))
 check_version "Clang++" "clang++ --version" "21" || ((FAILURES++))
+check_version "clang-format" "clang-format --version" "21" || ((FAILURES++))
+check_version "clang-tidy" "clang-tidy --version" "21" || ((FAILURES++))
+check_version "clj-kondo" "clj-kondo --version" "" || ((FAILURES++))
 check_version "Nuitka" "python3 -m nuitka --version" "2" || ((FAILURES++))
 echo ""
 

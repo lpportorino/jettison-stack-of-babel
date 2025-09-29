@@ -94,7 +94,8 @@ RUN apt-get install -y \
     libomp-21-dev && \
     update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100 && \
     update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100 && \
-    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-21 100
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-21 100 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-21 100
 
 # ============================================================================
 # Install Node.js 22 LTS
@@ -133,6 +134,8 @@ RUN curl -O https://download.clojure.org/install/linux-install.sh && \
 RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /usr/local/bin/lein && \
     chmod +x /usr/local/bin/lein && \
     lein version
+
+# clj-kondo installed via Clojure install script
 
 # ============================================================================
 # Install Python via pyenv
