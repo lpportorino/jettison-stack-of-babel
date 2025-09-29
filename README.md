@@ -149,7 +149,33 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 
 ## 🔧 Building Locally
 
-### Using Makefile (Recommended)
+### Quick Start (Universal Build Script)
+```bash
+# Automatic architecture detection and optimized build
+./build-local.sh
+
+# Build without cache
+./build-local.sh --no-cache
+
+# Quick build (skip tests)
+./build-local.sh --quick
+
+# Build and push to registry
+./build-local.sh --push
+
+# Just run tests on existing image
+./build-local.sh --test-only
+```
+
+The `build-local.sh` script automatically:
+- Detects your architecture (ARM64 or AMD64)
+- Selects the appropriate Dockerfile
+- Applies optimizations (Cortex-A78 for NVIDIA Orin)
+- Uses Docker Buildx if available
+- Runs basic validation tests
+- Shows build summary and usage instructions
+
+### Using Makefile
 ```bash
 # Show available targets
 make help
