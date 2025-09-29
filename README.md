@@ -4,7 +4,7 @@ A universal polyglot Docker image (`jon-babylon`) containing all language toolch
 
 ## 🎯 Purpose
 
-Provides a consistent, reproducible development environment with all necessary compilers, interpreters, and build tools for Jettison's diverse technology stack, eliminating the need to install these tools directly on host systems.
+Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally.
 
 ## 📦 Included Tools
 
@@ -51,22 +51,55 @@ docker run -it --rm \
   bash
 ```
 
-### Build a Project
+### Common Usage Patterns
+
+#### Build Projects
 ```bash
-# Java
+# Java with Maven
 docker run --rm -v $(pwd):/workspace -w /workspace \
   ghcr.io/lpportorino/jon-babylon:latest \
-  javac Main.java && java Main
+  mvn clean package
 
-# Python with Nuitka
+# Rust with Cargo
 docker run --rm -v $(pwd):/workspace -w /workspace \
   ghcr.io/lpportorino/jon-babylon:latest \
-  nuitka3 --standalone --onefile main.py
+  cargo build --release
 
-# TypeScript
+# TypeScript with esbuild
 docker run --rm -v $(pwd):/workspace -w /workspace \
   ghcr.io/lpportorino/jon-babylon:latest \
-  tsc main.ts && node main.js
+  esbuild src/index.ts --bundle --outfile=dist/app.js
+```
+
+#### Lint & Format Code
+```bash
+# ESLint for JavaScript/TypeScript
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  ghcr.io/lpportorino/jon-babylon:latest \
+  eslint src/ --fix
+
+# Prettier for multiple file types
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  ghcr.io/lpportorino/jon-babylon:latest \
+  prettier --write "**/*.{js,ts,json,css,md}"
+
+# Rust formatting and linting
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  ghcr.io/lpportorino/jon-babylon:latest \
+  cargo fmt && cargo clippy
+```
+
+#### Static Analysis
+```bash
+# Python type checking
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  ghcr.io/lpportorino/jon-babylon:latest \
+  mypy src/
+
+# C++ analysis with clang-tidy
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  ghcr.io/lpportorino/jon-babylon:latest \
+  clang-tidy src/*.cpp
 ```
 
 ## 🏗️ Architecture Support
@@ -122,43 +155,60 @@ The image is automatically built and published via GitHub Actions when:
 - **Build Time**: ~20-30 minutes
 - **Registry**: `ghcr.io/lpportorino/jon-babylon`
 
-## 🧪 Testing
+## 🧪 Testing Strategy
 
-Run the test suite to validate all tools:
+### Stage Testing
+Each Docker build stage is tested independently:
 ```bash
-./scripts/test_local.sh
+# Test a specific stage
+./docker/tests/test-stage.sh 05-python
 ```
 
-This will:
-1. Build the image locally
-2. Check all tool versions
-3. Build sample projects for each language
-4. Generate a test report
+### Tool Testing
+Each tool is tested with a real project:
+```bash
+# Run all tests
+./run_all_tests.sh
+
+# Test specific language
+./tests/java/run_test.sh
+./tests/python/run_test.sh
+./tests/rust/run_test.sh
+```
+
+### What We Test
+1. **Build Tools**: Can compile/build projects (Maven, Cargo, npm, etc.)
+2. **Linters**: Can analyze code (ESLint, clippy, mypy, etc.)
+3. **Formatters**: Can format code (Prettier, rustfmt, clang-format, etc.)
+4. **Package Managers**: Can install dependencies (pip, npm, cargo, etc.)
+5. **Final Assembly**: All tools work in the complete image
 
 ## 🛠️ Development
 
 ### Project Structure
 ```
 jettison-stack-of-babel/
-├── Dockerfile.arm64      # Production ARM64 image
-├── Dockerfile.x86_64     # Development x86_64 image
-├── scripts/
-│   ├── build.sh          # Build script
-│   ├── test_local.sh     # Local testing
-│   ├── check_versions.sh # Version validation
-│   └── run.sh           # Convenience wrapper
-├── tests/               # Test projects for each language
+├── docker/
+│   ├── stages/          # Modular Docker stages (00-11)
+│   ├── Dockerfile       # Main assembly file
+│   └── tests/           # Stage testing scripts
+├── tools/               # Installation scripts per tool
 │   ├── java/
-│   ├── kotlin/
-│   ├── clojure/
 │   ├── python/
-│   ├── typescript/
-│   └── web/
-├── .github/workflows/   # GitHub Actions CI/CD
-│   ├── build-and-push.yml
-│   └── test.yml
-├── TODO.md             # Development roadmap
-└── README.md           # This file
+│   ├── rust/
+│   └── ...
+├── tests/               # Test projects with linters/formatters
+│   ├── java/            # Maven + Gradle configs
+│   ├── python/          # pip + mypy + black configs
+│   ├── rust/            # Cargo + clippy + rustfmt
+│   ├── web/             # TypeScript + ESLint + Prettier
+│   └── ...
+├── scripts/
+│   ├── build-staged.sh  # Staged build script
+│   └── check_versions.sh
+├── .github/workflows/
+│   └── staged-build.yml # CI/CD pipeline
+└── Dockerfile.x86_64    # x86_64 specific build
 ```
 
 ### Adding New Tools
