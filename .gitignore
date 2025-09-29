@@ -226,8 +226,9 @@ release.properties
 .clj-kondo/
 .lsp/
 .calva/
-pom.xml
-pom.xml.asc
+# Clojure auto-generated pom.xml (but not test pom.xml files)
+tests/clojure/pom.xml
+tests/clojure/pom.xml.asc
 *.jar
 *.class
 /lib/

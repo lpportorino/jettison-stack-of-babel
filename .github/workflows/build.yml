@@ -1,0 +1,197 @@
+name: Build Multi-Architecture Images
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      push_to_registry:
+        description: 'Push to GitHub Container Registry'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }} Image
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-22.04
+            platform: linux/amd64
+            dockerfile: Dockerfile.x86_64
+            description: "Testing Only"
+
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+            platform: linux/arm64
+            dockerfile: Dockerfile.arm64
+            description: "NVIDIA Orin Optimized"
+            build-args: |
+              MARCH=armv8.2-a
+              MTUNE=cortex-a78
+              OPTFLAGS=-O3 -march=armv8.2-a -mtune=cortex-a78
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.arch }}
+            type=ref,event=pr,suffix=-${{ matrix.arch }}
+            type=semver,pattern={{version}},suffix=-${{ matrix.arch }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
+            type=raw,value=latest-${{ matrix.arch }},enable={{is_default_branch}}
+            type=sha,suffix=-${{ matrix.arch }}
+
+      - name: Build ${{ matrix.arch }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: false
+          load: true
+          tags: jon-babylon:${{ matrix.arch }}-test
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+          build-args: ${{ matrix.build-args }}
+
+      - name: Test image - Version Check
+        run: |
+          echo "Testing ${{ matrix.arch }} image (${{ matrix.description }})..."
+          docker run --rm jon-babylon:${{ matrix.arch }}-test /scripts/check_versions.sh
+
+      - name: Test image - Java
+        run: |
+          docker run --rm -v ${{ github.workspace }}/tests/java:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test image - Python
+        run: |
+          docker run --rm -v ${{ github.workspace }}/tests/python:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test image - Rust
+        run: |
+          docker run --rm -v ${{ github.workspace }}/tests/rust:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test image - Node.js
+        run: |
+          docker run --rm -v ${{ github.workspace }}/tests/nodejs:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test image - Web Stack
+        run: |
+          docker run --rm -v ${{ github.workspace }}/tests/web:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Check optimization flags (ARM64 only)
+        if: matrix.arch == 'arm64'
+        run: |
+          echo "Verifying ARM64 optimizations..."
+          docker run --rm jon-babylon:${{ matrix.arch }}-test bash -c "
+            echo 'Compiler flags:';
+            gcc -E -v - </dev/null 2>&1 | grep -E 'march|mtune';
+            echo 'Rust flags:';
+            rustc --print cfg | grep target_cpu
+          "
+
+      - name: Push image to registry
+        if: github.event_name != 'pull_request' && (github.event.inputs.push_to_registry != 'false')
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+          build-args: ${{ matrix.build-args }}
+
+      - name: Generate build report
+        if: always()
+        run: |
+          echo "## ${{ matrix.arch }} Build Report (${{ matrix.description }})" >> $GITHUB_STEP_SUMMARY
+          echo "- Platform: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Runner: ${{ matrix.runner }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Time: $(date)" >> $GITHUB_STEP_SUMMARY
+          docker images | grep jon-babylon >> $GITHUB_STEP_SUMMARY || true
+
+  create-manifest:
+    name: Create Multi-Architecture Manifest
+    needs: build
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'pull_request' && success()
+    permissions:
+      packages: write
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          # Get the appropriate tag based on the trigger
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            TAG="latest"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="${{ github.sha }}"
+          fi
+
+          # Create and push the manifest
+          docker manifest create \
+            ghcr.io/${{ github.repository }}:${TAG} \
+            ghcr.io/${{ github.repository }}:${TAG}-amd64 \
+            ghcr.io/${{ github.repository }}:${TAG}-arm64
+
+          docker manifest push ghcr.io/${{ github.repository }}:${TAG}
+
+          echo "Created multi-arch manifest: ghcr.io/${{ github.repository }}:${TAG}" >> $GITHUB_STEP_SUMMARY
