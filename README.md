@@ -168,21 +168,14 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 
 #### Build Script
 ```bash
-# Build with detailed logging and test reports
-./build-local-enhanced.sh
+# Build for current architecture
+./build-local.sh
 
 # Build without cache
-./build-local-enhanced.sh --no-cache
+./build-local.sh --no-cache
 
-# Run tests on existing image with logging
-./build-local-enhanced.sh --test-only
-
-# Generate report from existing logs
-./build-local-enhanced.sh --report-only
-
-# View logs after build
-ls -la build-logs/TIMESTAMP/
-cat build-logs/TIMESTAMP/test-report.md
+# Run all tests
+./run_all_tests.sh
 ```
 
 The build scripts automatically:
@@ -364,5 +357,21 @@ jettison-stack-of-babel/
 - Security scanning via Trivy on each build
 - Dependabot enabled for dependency updates
 - No credentials or secrets included in image
+
+## 📄 License
+
+This project (including Dockerfiles, scripts, and configuration) is licensed under the GNU General Public License v3.0 (GPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+### ⚠️ Important License Notice
+
+**The tools and software packages installed within the Docker image retain their original licenses.**
+
+**Before using this image in production or commercial contexts, you should review the licenses of the individual tools and ensure compliance with their terms.** The GPL-3.0 license of this project applies only to the Docker build configuration and supporting scripts, not to the software packages installed within the container.
+
+For a comprehensive list of installed tools and their licenses, run:
+```bash
+docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
+  /scripts/check_versions.sh --licenses  # Note: --licenses flag would need to be implemented
+```
 
 **Note**: This image is optimized for the Jettison project's specific needs but can be used for any polyglot development requiring these tools.
