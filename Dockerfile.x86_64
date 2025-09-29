@@ -1,0 +1,230 @@
+# jon-babylon - Universal Polyglot Development Image (x86_64)
+# Base: Ubuntu 22.04 LTS (matching Jettison host OS)
+FROM ubuntu:22.04
+
+# Metadata
+LABEL maintainer="Jettison Team"
+LABEL description="Jon-Babylon: Polyglot development environment for Jettison"
+LABEL version="2025.01"
+LABEL architecture="x86_64"
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set up working directory
+WORKDIR /workspace
+
+# ============================================================================
+# System Updates and Base Dependencies
+# ============================================================================
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y \
+        # Essential tools
+        curl wget git vim nano \
+        # Build essentials
+        build-essential make cmake pkg-config \
+        # Development libraries
+        libssl-dev libffi-dev libbz2-dev libreadline-dev libsqlite3-dev \
+        libncurses5-dev libncursesw5-dev xz-utils tk-dev libxml2-dev \
+        libxmlsec1-dev liblzma-dev \
+        # System tools
+        ca-certificates gnupg lsb-release software-properties-common \
+        sudo locales tzdata \
+        # Compression tools
+        zip unzip p7zip-full \
+        # Network tools
+        net-tools iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure locale
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# ============================================================================
+# Add APT Repositories
+# ============================================================================
+
+# LLVM/Clang 21 Repository
+RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | \
+    gpg --dearmor > /usr/share/keyrings/llvm-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" > /etc/apt/sources.list.d/llvm.list
+
+# NodeSource Repository for Node.js 22 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+
+# Update package lists with new repositories
+RUN apt-get update
+
+# ============================================================================
+# Install OpenJDK 21 LTS
+# ============================================================================
+RUN apt-get install -y openjdk-21-jdk && \
+    update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java && \
+    update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
+
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# ============================================================================
+# Install LLVM/Clang 21
+# ============================================================================
+RUN apt-get install -y \
+    clang-21 \
+    clang-tools-21 \
+    clang-format-21 \
+    clang-tidy-21 \
+    clangd-21 \
+    lldb-21 \
+    lld-21 \
+    llvm-21-dev \
+    llvm-21-tools \
+    llvm-21-runtime \
+    libclang-21-dev \
+    libclang-common-21-dev \
+    libclang-cpp21-dev \
+    libclang1-21 \
+    libc++-21-dev \
+    libc++abi-21-dev \
+    libclang-rt-21-dev \
+    libomp-21-dev && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100 && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-21 100
+
+# ============================================================================
+# Install Node.js 22 LTS
+# ============================================================================
+RUN apt-get install -y nodejs && \
+    npm install -g npm@latest
+
+# ============================================================================
+# Install Build Tools (Maven, Gradle)
+# ============================================================================
+# Maven
+ARG MAVEN_VERSION=3.9.8
+RUN wget -q https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt && \
+    ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven && \
+    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+ENV MAVEN_HOME=/opt/maven
+ENV PATH=$MAVEN_HOME/bin:$PATH
+
+# Gradle
+ARG GRADLE_VERSION=8.10
+RUN wget -q https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
+    unzip -q gradle-${GRADLE_VERSION}-bin.zip -C /opt && \
+    ln -s /opt/gradle-${GRADLE_VERSION} /opt/gradle && \
+    rm gradle-${GRADLE_VERSION}-bin.zip
+
+ENV GRADLE_HOME=/opt/gradle
+ENV PATH=$GRADLE_HOME/bin:$PATH
+
+# ============================================================================
+# Install Kotlin via SDKMAN (more reliable than snap in Docker)
+# ============================================================================
+RUN curl -s "https://get.sdkman.io" | bash && \
+    bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install kotlin"
+
+ENV PATH=$HOME/.sdkman/candidates/kotlin/current/bin:$PATH
+
+# ============================================================================
+# Install Clojure and Leiningen
+# ============================================================================
+# Clojure CLI tools
+RUN curl -O https://download.clojure.org/install/linux-install-1.12.0.1479.sh && \
+    chmod +x linux-install-1.12.0.1479.sh && \
+    ./linux-install-1.12.0.1479.sh && \
+    rm linux-install-1.12.0.1479.sh
+
+# Leiningen
+RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /usr/local/bin/lein && \
+    chmod +x /usr/local/bin/lein && \
+    lein version
+
+# ============================================================================
+# Install Python via pyenv
+# ============================================================================
+# Install pyenv
+RUN git clone https://github.com/pyenv/pyenv.git /opt/pyenv
+
+ENV PYENV_ROOT=/opt/pyenv
+ENV PATH=$PYENV_ROOT/bin:$PATH
+
+# Configure pyenv
+RUN echo 'eval "$(pyenv init -)"' >> /etc/profile.d/pyenv.sh
+
+# Install Python 3.12 and 3.13
+RUN pyenv install 3.12.7 && \
+    pyenv install 3.13.0 && \
+    pyenv global 3.13.0
+
+# Make Python available system-wide
+RUN ln -sf $PYENV_ROOT/versions/3.13.0/bin/python3 /usr/local/bin/python3 && \
+    ln -sf $PYENV_ROOT/versions/3.13.0/bin/pip3 /usr/local/bin/pip3
+
+# ============================================================================
+# Install Nuitka (Python Compiler)
+# ============================================================================
+RUN pip3 install --upgrade pip setuptools wheel && \
+    pip3 install nuitka ordered-set patchelf
+
+# ============================================================================
+# Install Bun
+# ============================================================================
+RUN curl -fsSL https://bun.sh/install | bash
+
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
+
+# ============================================================================
+# Install JavaScript/TypeScript Global Packages
+# ============================================================================
+RUN npm install -g \
+    typescript@latest \
+    esbuild@latest \
+    prettier@latest \
+    eslint@latest \
+    @lit/localize@latest \
+    @lit/localize-tools@latest \
+    yarn@latest \
+    pnpm@latest \
+    turbo@latest \
+    nx@latest
+
+# ============================================================================
+# Create Scripts Directory
+# ============================================================================
+RUN mkdir -p /scripts
+
+# Version check script
+COPY scripts/check_versions.sh /scripts/
+RUN chmod +x /scripts/check_versions.sh || true
+
+# ============================================================================
+# Clean up
+# ============================================================================
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# ============================================================================
+# Environment Summary
+# ============================================================================
+RUN echo "jon-babylon build complete!" && \
+    echo "Available tools:" && \
+    echo "  - OpenJDK $(java -version 2>&1 | head -n1)" && \
+    echo "  - Clang $(clang --version | head -n1)" && \
+    echo "  - Node.js $(node --version)" && \
+    echo "  - Python $(python3 --version)" && \
+    echo "  - Kotlin $(kotlin -version 2>&1 | head -n1 || echo 'installed')" && \
+    echo "  - Clojure $(clojure --version || echo 'installed')" && \
+    echo "  - Maven $(mvn --version | head -n1)" && \
+    echo "  - Gradle $(gradle --version | grep Gradle)" && \
+    echo "  - Bun $(bun --version)" && \
+    echo "  - TypeScript $(tsc --version)"
+
+# Default command
+CMD ["/bin/bash"]
