@@ -47,7 +47,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         locales \
         git \
         unzip \
-        xz-utils && \
+        xz-utils \
+        patchelf && \
     locale-gen en_US.UTF-8 && \
     useradd -m -s /bin/bash -u 1000 developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

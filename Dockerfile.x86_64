@@ -35,6 +35,8 @@ RUN apt-get update && apt-get upgrade -y && \
         zip unzip p7zip-full \
         # Network tools
         net-tools iputils-ping \
+        # Build tools for Nuitka
+        patchelf \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure locale
