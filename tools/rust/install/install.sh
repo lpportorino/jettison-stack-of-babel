@@ -23,20 +23,23 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
     --component rustfmt \
     --component clippy
 
+# Create system directories
+mkdir -p /opt/cargo /opt/rustup
+
+# Move to system location
+if [ -d "$HOME/.cargo" ]; then
+    mv $HOME/.cargo/* /opt/cargo/ 2>/dev/null || true
+    rm -rf $HOME/.cargo
+fi
+if [ -d "$HOME/.rustup" ]; then
+    mv $HOME/.rustup/* /opt/rustup/ 2>/dev/null || true
+    rm -rf $HOME/.rustup
+fi
+
 # Set up environment
 export CARGO_HOME="/opt/cargo"
 export RUSTUP_HOME="/opt/rustup"
 export PATH="$CARGO_HOME/bin:$PATH"
-
-# Move to system location
-if [ -d "$HOME/.cargo" ]; then
-    mv $HOME/.cargo/* $CARGO_HOME/ 2>/dev/null || true
-    rm -rf $HOME/.cargo
-fi
-if [ -d "$HOME/.rustup" ]; then
-    mv $HOME/.rustup/* $RUSTUP_HOME/ 2>/dev/null || true
-    rm -rf $HOME/.rustup
-fi
 
 # Create environment file
 cat > /etc/profile.d/rust.sh << 'EOF'

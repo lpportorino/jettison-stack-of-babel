@@ -251,13 +251,16 @@ The images are built in parallel using a matrix strategy in a single workflow:
 
 ### Build Process
 1. **Matrix Strategy**: ARM64 and AMD64 build simultaneously using GitHub Actions matrix
-2. **Unified Testing**: Both architectures run identical test suites:
+2. **Sequential Testing**: Each architecture runs tests sequentially for clearer logs:
    - Version checks (`/scripts/check_versions.sh`)
    - Java tests (Maven, Gradle)
-   - Python tests (pip, black, flake8, ruff, mypy, Nuitka)
+   - Kotlin tests
+   - Clojure tests (Leiningen)
+   - Python tests (pip, black, flake8, ruff, mypy, pytest, Nuitka)
    - Rust tests (cargo, rustfmt, clippy)
+   - C/C++ tests (clang, clang-format, clang-tidy)
    - Node.js tests (npm, yarn, pnpm)
-   - Web stack tests (TypeScript, ESLint, Prettier)
+   - Web stack tests (TypeScript, ESLint, Prettier, esbuild)
 3. **Architecture-specific optimizations**: ARM64 builds include Cortex-A78 optimizations
 4. **Registry Push**: Push architecture-specific images (when not a PR)
 5. **Manifest Creation**: Create multi-arch manifest linking both images
@@ -346,9 +349,8 @@ jettison-stack-of-babel/
 │   ├── build-staged.sh  # Staged build script
 │   └── check_versions.sh
 ├── .github/workflows/
-│   ├── build.yml        # Unified multi-arch build
-│   ├── staged-build.yml # Staged build pipeline
-│   └── create-manifest.yml # Multi-arch manifest creation
+│   └── build.yml        # Unified multi-arch build with matrix strategy
+├── Dockerfile.arm64     # ARM64 specific build (NVIDIA Orin optimized)
 └── Dockerfile.x86_64    # x86_64 specific build
 ```
 

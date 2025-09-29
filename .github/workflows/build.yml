@@ -1,4 +1,4 @@
-name: Build Multi-Architecture Images
+name: Build and Test Multi-Architecture Images
 
 on:
   push:
@@ -33,13 +33,13 @@ jobs:
             runner: ubuntu-22.04
             platform: linux/amd64
             dockerfile: Dockerfile.x86_64
-            description: "Testing Only"
+            description: "AMD64 - Development/Testing"
 
           - arch: arm64
             runner: ubuntu-22.04-arm
             platform: linux/arm64
             dockerfile: Dockerfile.arm64
-            description: "NVIDIA Orin Optimized"
+            description: "ARM64 - NVIDIA Orin Optimized"
             build-args: |
               MARCH=armv8.2-a
               MTUNE=cortex-a78
@@ -77,7 +77,8 @@ jobs:
             type=raw,value=latest-${{ matrix.arch }},enable={{is_default_branch}}
             type=sha,suffix=-${{ matrix.arch }}
 
-      - name: Build ${{ matrix.arch }} image
+      # Build the Docker image
+      - name: Build ${{ matrix.arch }} Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -90,52 +91,95 @@ jobs:
           cache-to: type=gha,scope=${{ matrix.arch }},mode=max
           build-args: ${{ matrix.build-args }}
 
-      - name: Test image - Version Check
+      # Run tests sequentially for better log readability
+      - name: Test - Version Check
         run: |
-          echo "Testing ${{ matrix.arch }} image (${{ matrix.description }})..."
+          echo "=== Testing ${{ matrix.description }} ==="
+          echo "Checking installed tool versions..."
           docker run --rm jon-babylon:${{ matrix.arch }}-test /scripts/check_versions.sh
 
-      - name: Test image - Java
+      - name: Test - Java (Maven, Gradle)
         run: |
+          echo "=== Testing Java with Maven and Gradle ==="
           docker run --rm -v ${{ github.workspace }}/tests/java:/workspace \
             jon-babylon:${{ matrix.arch }}-test \
             bash -c "cd /workspace && ./run_test.sh"
 
-      - name: Test image - Python
+      - name: Test - Kotlin
+        if: always()
         run: |
+          echo "=== Testing Kotlin ==="
+          docker run --rm -v ${{ github.workspace }}/tests/kotlin:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test - Clojure (Leiningen)
+        if: always()
+        run: |
+          echo "=== Testing Clojure with Leiningen ==="
+          docker run --rm -v ${{ github.workspace }}/tests/clojure:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test - Python (pip, black, flake8, ruff, mypy, pytest, Nuitka)
+        if: always()
+        run: |
+          echo "=== Testing Python and tools ==="
           docker run --rm -v ${{ github.workspace }}/tests/python:/workspace \
             jon-babylon:${{ matrix.arch }}-test \
             bash -c "cd /workspace && ./run_test.sh"
 
-      - name: Test image - Rust
+      - name: Test - Rust (cargo, rustfmt, clippy)
+        if: always()
         run: |
+          echo "=== Testing Rust with Cargo ==="
           docker run --rm -v ${{ github.workspace }}/tests/rust:/workspace \
             jon-babylon:${{ matrix.arch }}-test \
             bash -c "cd /workspace && ./run_test.sh"
 
-      - name: Test image - Node.js
+      - name: Test - C/C++ (clang, clang-format, clang-tidy)
+        if: always()
         run: |
+          echo "=== Testing C/C++ with Clang ==="
+          docker run --rm -v ${{ github.workspace }}/tests/c:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+          docker run --rm -v ${{ github.workspace }}/tests/cpp:/workspace \
+            jon-babylon:${{ matrix.arch }}-test \
+            bash -c "cd /workspace && ./run_test.sh"
+
+      - name: Test - Node.js (npm, yarn, pnpm)
+        if: always()
+        run: |
+          echo "=== Testing Node.js and package managers ==="
           docker run --rm -v ${{ github.workspace }}/tests/nodejs:/workspace \
             jon-babylon:${{ matrix.arch }}-test \
             bash -c "cd /workspace && ./run_test.sh"
 
-      - name: Test image - Web Stack
+      - name: Test - Web Stack (TypeScript, ESLint, Prettier, esbuild)
+        if: always()
         run: |
+          echo "=== Testing Web Development Stack ==="
           docker run --rm -v ${{ github.workspace }}/tests/web:/workspace \
             jon-babylon:${{ matrix.arch }}-test \
             bash -c "cd /workspace && ./run_test.sh"
 
       - name: Check optimization flags (ARM64 only)
-        if: matrix.arch == 'arm64'
+        if: matrix.arch == 'arm64' && always()
         run: |
-          echo "Verifying ARM64 optimizations..."
+          echo "=== Verifying ARM64 optimizations ==="
           docker run --rm jon-babylon:${{ matrix.arch }}-test bash -c "
-            echo 'Compiler flags:';
-            gcc -E -v - </dev/null 2>&1 | grep -E 'march|mtune';
-            echo 'Rust flags:';
-            rustc --print cfg | grep target_cpu
+            echo 'GCC flags:';
+            gcc -E -v - </dev/null 2>&1 | grep -E 'march|mtune' || echo 'No specific optimizations';
+            echo '';
+            echo 'Rust target CPU:';
+            rustc --print cfg | grep target_cpu || echo 'Default target';
+            echo '';
+            echo 'Python build info:';
+            python3 -c 'import sysconfig; print(sysconfig.get_config_var(\"CFLAGS\"))' || echo 'No Python CFLAGS';
           "
 
+      # Push to registry only if tests pass
       - name: Push image to registry
         if: github.event_name != 'pull_request' && (github.event.inputs.push_to_registry != 'false')
         uses: docker/build-push-action@v5
@@ -147,17 +191,23 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
           build-args: ${{ matrix.build-args }}
 
-      - name: Generate build report
+      - name: Generate build summary
         if: always()
         run: |
-          echo "## ${{ matrix.arch }} Build Report (${{ matrix.description }})" >> $GITHUB_STEP_SUMMARY
-          echo "- Platform: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Runner: ${{ matrix.runner }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Build Time: $(date)" >> $GITHUB_STEP_SUMMARY
-          docker images | grep jon-babylon >> $GITHUB_STEP_SUMMARY || true
+          echo "## Build Summary: ${{ matrix.description }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner**: ${{ matrix.runner }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dockerfile**: ${{ matrix.dockerfile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Image Details" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          docker images | grep jon-babylon | head -5 >> $GITHUB_STEP_SUMMARY || echo "No images found"
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   create-manifest:
     name: Create Multi-Architecture Manifest
@@ -177,21 +227,53 @@ jobs:
 
       - name: Create and push multi-arch manifest
         run: |
-          # Get the appropriate tag based on the trigger
+          # Determine the tag to use
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAG="latest"
+            TAGS=("latest")
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            TAG="${{ github.ref_name }}"
+            TAGS=("${{ github.ref_name }}" "latest")
           else
-            TAG="${{ github.sha }}"
+            TAGS=("sha-${{ github.sha }}")
           fi
 
-          # Create and push the manifest
-          docker manifest create \
-            ghcr.io/${{ github.repository }}:${TAG} \
-            ghcr.io/${{ github.repository }}:${TAG}-amd64 \
-            ghcr.io/${{ github.repository }}:${TAG}-arm64
+          # Create and push manifests for each tag
+          for TAG in "${TAGS[@]}"; do
+            echo "Creating manifest for tag: ${TAG}"
 
-          docker manifest push ghcr.io/${{ github.repository }}:${TAG}
+            docker manifest create \
+              ghcr.io/${{ github.repository }}:${TAG} \
+              ghcr.io/${{ github.repository }}:${TAG}-amd64 \
+              ghcr.io/${{ github.repository }}:${TAG}-arm64
 
-          echo "Created multi-arch manifest: ghcr.io/${{ github.repository }}:${TAG}" >> $GITHUB_STEP_SUMMARY
+            docker manifest annotate \
+              ghcr.io/${{ github.repository }}:${TAG} \
+              ghcr.io/${{ github.repository }}:${TAG}-arm64 \
+              --os linux --arch arm64 --variant v8
+
+            docker manifest annotate \
+              ghcr.io/${{ github.repository }}:${TAG} \
+              ghcr.io/${{ github.repository }}:${TAG}-amd64 \
+              --os linux --arch amd64
+
+            docker manifest push ghcr.io/${{ github.repository }}:${TAG}
+
+            echo "✅ Pushed manifest: ghcr.io/${{ github.repository }}:${TAG}" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Generate manifest summary
+        run: |
+          echo "## Multi-Architecture Manifest Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Available Images" >> $GITHUB_STEP_SUMMARY
+          echo "- **Multi-arch**: \`ghcr.io/${{ github.repository }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **AMD64**: \`ghcr.io/${{ github.repository }}:latest-amd64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ARM64**: \`ghcr.io/${{ github.repository }}:latest-arm64\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Auto-select architecture" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Run interactive shell" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -it --rm ghcr.io/${{ github.repository }}:latest bash" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
