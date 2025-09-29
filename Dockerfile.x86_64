@@ -173,6 +173,18 @@ RUN pip3 install --upgrade pip setuptools wheel && \
     pip3 install nuitka ordered-set patchelf
 
 # ============================================================================
+# Install Rust
+# ============================================================================
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+
+ENV CARGO_HOME=/root/.cargo
+ENV RUSTUP_HOME=/root/.rustup
+ENV PATH=$CARGO_HOME/bin:$PATH
+
+# Install common Rust tools
+RUN cargo install cargo-watch cargo-edit cargo-outdated
+
+# ============================================================================
 # Install Bun
 # ============================================================================
 RUN curl -fsSL https://bun.sh/install | bash
@@ -219,6 +231,7 @@ RUN echo "jon-babylon build complete!" && \
     echo "  - Clang $(clang --version | head -n1)" && \
     echo "  - Node.js $(node --version)" && \
     echo "  - Python $(python3 --version)" && \
+    echo "  - Rust $(rustc --version)" && \
     echo "  - Kotlin $(kotlin -version 2>&1 | head -n1 || echo 'installed')" && \
     echo "  - Clojure $(clojure --version || echo 'installed')" && \
     echo "  - Maven $(mvn --version | head -n1)" && \

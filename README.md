@@ -13,6 +13,7 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Kotlin** - Latest stable (2.1.x)
 - **Clojure** - Latest stable (1.12.x) with Leiningen
 - **Python** - 3.12+ via pyenv
+- **Rust** - Latest stable (1.85.x) via rustup
 - **JavaScript/TypeScript** - Node.js 22 LTS
 - **C/C++** - LLVM/Clang 21
 
@@ -26,6 +27,7 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Maven** - Java/Kotlin build tool
 - **Gradle** - Modern build automation
 - **Leiningen** - Clojure project automation
+- **Cargo** - Rust package manager and build tool
 - **npm/yarn/pnpm** - JavaScript package managers
 
 ### Web Development
