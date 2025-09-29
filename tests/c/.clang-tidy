@@ -1,0 +1,41 @@
+Checks: '
+bugprone-*,
+cert-*,
+clang-analyzer-core.*,
+clang-analyzer-unix.*,
+clang-analyzer-security.*,
+clang-analyzer-nullability.*,
+clang-analyzer-cplusplus.*,
+performance-*,
+security-*,
+-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+-cert-env33-c,
+-bugprone-easily-swappable-parameters,
+-bugprone-reserved-identifier,
+-cert-dcl37-c,
+-cert-dcl51-cpp,
+-clang-diagnostic-newline-eof,
+-bugprone-casting-through-void'
+
+WarningsAsErrors: '*'
+
+CheckOptions:
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: 'assert'
+  - key: bugprone-dangling-handle.HandleClasses
+    value: 'std::basic_string_view;std::experimental::basic_string_view'
+  - key: cert-dcl16-c.NewSuffixes
+    value: 'L;LL;LU;LLU'
+  - key: cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField
+    value: '0'
+  - key: cert-str34-c.DiagnoseSignedUnsignedCharComparisons
+    value: '0'
+  - key: performance-inefficient-string-concatenation.StrictMode
+    value: '0'
+  - key: performance-type-promotion-in-math-fn.IncludeStyle
+    value: llvm
+
+FormatStyle: file
+InheritParentConfig: false
+SystemHeaders: false
+UseColor: true
