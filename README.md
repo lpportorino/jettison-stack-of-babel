@@ -30,10 +30,29 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Cargo** - Rust package manager and build tool
 - **npm/yarn/pnpm** - JavaScript package managers
 
+### Code Quality Tools
+
+#### Linters
+- **ESLint** - JavaScript/TypeScript linting
+- **ktlint** - Kotlin code style checker
+- **detekt** - Kotlin static analyzer
+- **flake8** - Python style guide enforcement
+- **ruff** - Fast Python linter
+- **mypy** - Python static type checker
+- **clippy** - Rust linter
+- **clang-tidy** - C/C++ static analyzer
+
+#### Formatters
+- **Prettier** - Multi-language code formatter (JS/TS/JSON/CSS/MD)
+- **black** - Python code formatter
+- **rustfmt** - Rust code formatter
+- **clang-format** - C/C++ code formatter
+
 ### Web Development
 - **@lit/localize** - Internationalization for Lit
-- **Prettier** - Code formatter
-- **ESLint** - JavaScript linter
+- **TypeScript** - JavaScript with types
+- **esbuild** - Fast bundler
+- **Bun** - All-in-one JavaScript runtime
 
 ## 🚀 Quick Start
 
