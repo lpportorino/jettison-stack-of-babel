@@ -16,7 +16,16 @@ A universal polyglot Docker image (`jon-babylon`) containing all language toolch
 
 Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally. The image is optimized for ARM64 execution on NVIDIA Orin platforms.
 
-## 📦 Included Tools
+## 📦 Included Tools - Complete List
+
+### Summary
+- **8 Programming Languages** with compilers/interpreters
+- **15+ Linters & Formatters** for code quality
+- **10+ Build Tools** for project management
+- **5 Package Managers** for dependencies
+- **30+ Development Tools** total
+
+## 🛠️ Detailed Tool Inventory
 
 ### Programming Languages
 - **Java** - OpenJDK 21 LTS
@@ -66,13 +75,35 @@ Provides a consistent, reproducible development environment with all necessary c
 
 ## 🚀 Quick Start
 
-### Pull the Image
+### Build Locally (Recommended)
 ```bash
+# Auto-detect architecture and build optimized image
+./build-local.sh
+
+# Quick build (skip tests)
+./build-local.sh --quick
+```
+
+### Pull from Registry (When Available)
+```bash
+# Multi-arch (auto-selects ARM64 or AMD64)
 docker pull ghcr.io/lpportorino/jon-babylon:latest
+
+# Architecture-specific
+docker pull ghcr.io/lpportorino/jon-babylon:latest-arm64  # NVIDIA Orin
+docker pull ghcr.io/lpportorino/jon-babylon:latest-amd64  # Testing
 ```
 
 ### Run Interactive Shell
 ```bash
+# Using local build
+docker run -it --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  jon-babylon:latest \
+  bash
+
+# Using registry image
 docker run -it --rm \
   -v $(pwd):/workspace \
   -w /workspace \
