@@ -6,24 +6,11 @@ A universal polyglot Docker image (`jon-babylon`) containing all language toolch
 
 **Ubuntu 22.04 ARM64 on NVIDIA AGX Orin**
 
-### Supported Hardware Configurations:
-- **Orin NX**: 8-core ARM® Cortex®-A78AE v8.2 64-bit CPU (2MB L2 + 4MB L3)
-- **Orin AGX**: 12-core ARM® Cortex®-A78AE v8.2 64-bit CPU (3MB L2 + 6MB L3)
-
 > **Note**: The AMD64 variant is provided for local development and testing only. All optimizations target ARM64 architecture.
 
 ## 🎯 Purpose
 
 Provides a consistent, reproducible development environment with all necessary compilers, interpreters, linters, formatters, and build tools for Jettison's diverse technology stack. Mount your host project into the container to build, lint, format, and analyze code without installing tools locally. The image is optimized for ARM64 execution on NVIDIA Orin platforms.
-
-## 📦 Included Tools - Complete List
-
-### Summary
-- **8 Programming Languages** with compilers/interpreters
-- **15+ Linters & Formatters** for code quality
-- **10+ Build Tools** for project management
-- **5 Package Managers** for dependencies
-- **30+ Development Tools** total
 
 ## 🛠️ Detailed Tool Inventory
 
@@ -79,12 +66,6 @@ Provides a consistent, reproducible development environment with all necessary c
 ```bash
 # Auto-detect architecture and build optimized image
 ./build-local.sh
-
-# Enhanced build with comprehensive logging
-./build-local-enhanced.sh
-
-# Quick build (skip tests - NOT RECOMMENDED!)
-./build-local.sh --quick
 ```
 
 ### Pull from Registry (When Available)
@@ -185,25 +166,7 @@ Both architectures are built in parallel using separate GitHub Actions workflows
 
 ### Quick Start (Universal Build Scripts)
 
-#### Standard Build Script
-```bash
-# Automatic architecture detection and optimized build
-./build-local.sh
-
-# Build without cache
-./build-local.sh --no-cache
-
-# Quick build (skip tests - NOT RECOMMENDED!)
-./build-local.sh --quick
-
-# Build and push to registry
-./build-local.sh --push
-
-# Just run tests on existing image
-./build-local.sh --test-only
-```
-
-#### Enhanced Build Script (with Comprehensive Logging)
+#### Build Script
 ```bash
 # Build with detailed logging and test reports
 ./build-local-enhanced.sh
@@ -263,10 +226,6 @@ docker buildx build --platform linux/arm64 \
 docker build -t jon-babylon:x86_64 -f Dockerfile.x86_64 .
 ```
 
-## 📋 Version Management
-
-All tools are installed using official package repositories or installation scripts to ensure we get the latest stable versions without building from source.
-
 ### Check Installed Versions
 ```bash
 docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
@@ -293,7 +252,6 @@ The images are built in parallel on architecture-specific runners:
 ### Trigger Conditions
 - Push to `main` branch
 - New release tags
-- Daily at 00:00 UTC (tool updates)
 - Manual workflow dispatch
 
 ### Build Process
@@ -406,32 +364,5 @@ jettison-stack-of-babel/
 - Security scanning via Trivy on each build
 - Dependabot enabled for dependency updates
 - No credentials or secrets included in image
-
-## 📝 License
-
-This project is part of the Jettison ecosystem and follows its licensing terms.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-1. Check the TODO.md for planned features
-2. Test your changes locally first
-3. Ensure all existing tests pass
-4. Add tests for new functionality
-5. Update documentation as needed
-
-## 🔗 Related Projects
-
-- [Jettison](https://github.com/lpportorino/jettison) - Main project repository
-- [Jettison Documentation](https://github.com/lpportorino/jettison/docs) - Project documentation
-
-## 📞 Support
-
-For issues or questions:
-- Open an issue in this repository
-- Check existing issues for solutions
-- Consult the Jettison documentation
-
----
 
 **Note**: This image is optimized for the Jettison project's specific needs but can be used for any polyglot development requiring these tools.
