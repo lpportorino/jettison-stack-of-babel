@@ -3,6 +3,10 @@
 
 set -e
 
+# Ensure we're in the right directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR"
+
 echo "=== Testing Clojure Installation ==="
 
 # Test Clojure version
