@@ -17,7 +17,12 @@ async fn async_test() {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     println!("=== Jon-Babylon Rust Test ===");
-    println!("Rust version: {}", env!("RUSTC_VERSION"));
+    // Get Rust version at runtime
+    let rust_version = std::process::Command::new("rustc")
+        .arg("--version")
+        .output()
+        .expect("Failed to get rustc version");
+    println!("Rust version: {}", String::from_utf8_lossy(&rust_version.stdout).trim());
 
     // Test async
     async_test().await;

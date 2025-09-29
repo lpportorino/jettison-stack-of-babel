@@ -45,9 +45,12 @@ export RUSTUP_HOME="/opt/rustup"
 export PATH="$CARGO_HOME/bin:$PATH"
 EOF
 
+# Source the environment for this session
+source /etc/profile.d/rust.sh
+
 # Install common Rust tools
-cargo install cargo-watch cargo-edit cargo-outdated cargo-audit
+$CARGO_HOME/bin/cargo install cargo-watch cargo-edit cargo-outdated cargo-audit
 
 echo "✓ Rust installed successfully"
-rustc --version
-cargo --version
+$CARGO_HOME/bin/rustc --version
+$CARGO_HOME/bin/cargo --version
