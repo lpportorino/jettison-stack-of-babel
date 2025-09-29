@@ -2,18 +2,19 @@
 # Target: Ubuntu 22.04 ARM64 on NVIDIA Orin (Cortex-A78AE)
 # Build with: make build-arm64
 
+# Use the staged build system
+FROM ubuntu:22.04 AS base
+
 # Build arguments for optimization
 ARG MARCH=armv8.2-a
 ARG MTUNE=cortex-a78
 ARG OPTFLAGS="-O3 -march=armv8.2-a -mtune=cortex-a78"
 
-# Use the staged build system
-FROM ubuntu:22.04 AS base
-
 # Set architecture-specific environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
+    OPTFLAGS="${OPTFLAGS}" \
     CFLAGS="${OPTFLAGS}" \
     CXXFLAGS="${OPTFLAGS}" \
     LDFLAGS="-Wl,-O3" \

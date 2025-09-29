@@ -19,7 +19,9 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
     sh -s -- -y \
     --default-toolchain stable \
     --profile default \
-    --component rust-src rustfmt clippy
+    --component rust-src \
+    --component rustfmt \
+    --component clippy
 
 # Set up environment
 export CARGO_HOME="/opt/cargo"

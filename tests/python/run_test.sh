@@ -37,43 +37,43 @@ python3 src/main.py
 echo ""
 echo "=== Testing Black Formatter ==="
 echo "→ Black version:"
-black --version
+python3 -m black --version
 
 echo "→ Checking code format..."
-black --check src/ || {
+python3 -m black --check src/ || {
     echo "→ Code needs formatting. Showing diff:"
-    black --diff src/
+    python3 -m black --diff src/
 }
 
 echo "→ Formatting code (dry-run)..."
-black --diff --color src/ || true
+python3 -m black --diff --color src/ || true
 
 # Test Flake8 linter
 echo ""
 echo "=== Testing Flake8 Linter ==="
 echo "→ Flake8 version:"
-flake8 --version
+python3 -m flake8 --version
 
 echo "→ Running flake8 checks..."
-flake8 src/ --show-source --statistics || echo "Flake8 check completed (may have warnings)"
+python3 -m flake8 src/ --show-source --statistics || echo "Flake8 check completed (may have warnings)"
 
 # Test Ruff linter (faster alternative)
 echo ""
 echo "=== Testing Ruff Linter ==="
 echo "→ Ruff version:"
-ruff --version
+python3 -m ruff --version
 
 echo "→ Running ruff checks..."
-ruff check src/ --show-fixes || echo "Ruff check completed (may have warnings)"
+python3 -m ruff check src/ --show-fixes || echo "Ruff check completed (may have warnings)"
 
 # Test mypy type checker
 echo ""
 echo "=== Testing MyPy Type Checker ==="
 echo "→ MyPy version:"
-mypy --version
+python3 -m mypy --version
 
 echo "→ Running type checking..."
-mypy src/main.py --show-error-codes || echo "MyPy check completed (may have type warnings)"
+python3 -m mypy src/main.py --show-error-codes || echo "MyPy check completed (may have type warnings)"
 
 # Test pytest
 echo ""
