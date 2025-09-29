@@ -160,7 +160,7 @@ docker run --rm -v $(pwd):/workspace -w /workspace \
 - **Build Runner**: `ubuntu-22.04` (GitHub Actions)
 - **Purpose**: Local development and testing only
 
-Both architectures are built in parallel using separate GitHub Actions workflows and pushed to GitHub Container Registry with architecture-specific tags.
+Both architectures are built in parallel using a unified GitHub Actions workflow with matrix strategy and pushed to GitHub Container Registry with architecture-specific tags.
 
 ## 🔧 Building Locally
 
@@ -227,33 +227,40 @@ docker run --rm ghcr.io/lpportorino/jon-babylon:latest \
 
 ## 🔄 CI/CD Pipeline
 
-### Parallel Architecture Builds
-The images are built in parallel on architecture-specific runners:
+### Unified Multi-Architecture Build
+The images are built in parallel using a matrix strategy in a single workflow:
 
-#### ARM64 Workflow (`build-arm64.yml`)
-- **Runner**: `ubuntu-22.04-arm`
-- **Target**: NVIDIA AGX Orin
-- **Optimizations**: ARMv8.2-A with Cortex-A78 tuning
-- **Tags**: `latest-arm64`, `<version>-arm64`
-
-#### AMD64 Workflow (`build-amd64.yml`)
-- **Runner**: `ubuntu-22.04`
-- **Target**: Development/Testing
-- **Optimizations**: Generic x86-64
-- **Tags**: `latest-amd64`, `<version>-amd64`
+#### Build Matrix Configuration
+- **Workflow**: `.github/workflows/build.yml`
+- **Strategy**: Matrix builds for both architectures
+- **ARM64 Configuration**:
+  - Runner: `ubuntu-22.04-arm`
+  - Target: NVIDIA AGX Orin
+  - Optimizations: ARMv8.2-A with Cortex-A78 tuning
+  - Tags: `latest-arm64`, `<version>-arm64`
+- **AMD64 Configuration**:
+  - Runner: `ubuntu-22.04`
+  - Target: Development/Testing
+  - Optimizations: Generic x86-64
+  - Tags: `latest-amd64`, `<version>-amd64`
 
 ### Trigger Conditions
 - Push to `main` branch
-- New release tags
-- Manual workflow dispatch
+- Pull requests to `main` branch
+- Manual workflow dispatch with optional registry push control
 
 ### Build Process
-1. **Parallel Builds**: ARM64 and AMD64 build simultaneously on different runners
-2. **Shared Tests**: Both architectures run the same test suite (`tests/`)
-3. **Version Validation**: Check all tool versions
-4. **Integration Tests**: Build sample projects for each language
-5. **Registry Push**: Push architecture-specific images
-6. **Manifest Creation**: Create multi-arch manifest linking both images
+1. **Matrix Strategy**: ARM64 and AMD64 build simultaneously using GitHub Actions matrix
+2. **Unified Testing**: Both architectures run identical test suites:
+   - Version checks (`/scripts/check_versions.sh`)
+   - Java tests (Maven, Gradle)
+   - Python tests (pip, black, flake8, ruff, mypy, Nuitka)
+   - Rust tests (cargo, rustfmt, clippy)
+   - Node.js tests (npm, yarn, pnpm)
+   - Web stack tests (TypeScript, ESLint, Prettier)
+3. **Architecture-specific optimizations**: ARM64 builds include Cortex-A78 optimizations
+4. **Registry Push**: Push architecture-specific images (when not a PR)
+5. **Manifest Creation**: Create multi-arch manifest linking both images
 
 ## 📊 Image Details
 
@@ -339,7 +346,9 @@ jettison-stack-of-babel/
 │   ├── build-staged.sh  # Staged build script
 │   └── check_versions.sh
 ├── .github/workflows/
-│   └── staged-build.yml # CI/CD pipeline
+│   ├── build.yml        # Unified multi-arch build
+│   ├── staged-build.yml # Staged build pipeline
+│   └── create-manifest.yml # Multi-arch manifest creation
 └── Dockerfile.x86_64    # x86_64 specific build
 ```
 
