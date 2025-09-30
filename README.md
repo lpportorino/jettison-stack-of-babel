@@ -180,14 +180,7 @@ docker run --rm ghcr.io/lpportorino/jon-babylon-python:latest check_versions.sh
 docker run --rm ghcr.io/lpportorino/jon-babylon-rust:latest check_versions.sh
 ```
 
-Run comprehensive tests:
-```bash
-# Run test suite for specific container
-./tests/java/run_test.sh      # Test JVM container
-./tests/python/run_test.sh    # Test Python container
-./tests/rust/run_test.sh      # Test Rust container
-./tests/nodejs/run_test.sh    # Test Web container
-```
+Tests are run automatically in CI/CD. Each container includes test suites that verify all tools are properly installed and functioning.
 
 ## 📊 Multi-Architecture Support
 
@@ -215,8 +208,6 @@ jettison-stack-of-babel/
 │   ├── rust/             # Rust toolchain
 │   ├── go/               # Go development
 │   └── web/              # Node.js/Web tools
-├── tools/                # Installation scripts
-├── tests/                # Test suites
 ├── docker-compose.yml    # Multi-container setup
 └── .github/workflows/    # CI/CD pipelines
 ```

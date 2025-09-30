@@ -1,5 +1,6 @@
 # JVM Container - Java, Kotlin, Clojure, and build tools
-FROM ghcr.io/lpportorino/jon-babylon-base:latest
+ARG BASE_IMAGE=ghcr.io/lpportorino/jon-babylon-base:latest
+FROM ${BASE_IMAGE}
 
 # Switch to root for installation
 USER root

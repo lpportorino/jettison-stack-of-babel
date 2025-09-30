@@ -1,6 +1,7 @@
 # Python Container - Python development with Nuitka
 # Builds on Clang container for Nuitka compilation support
-FROM ghcr.io/lpportorino/jon-babylon-clang:latest
+ARG CLANG_IMAGE=ghcr.io/lpportorino/jon-babylon-clang:latest
+FROM ${CLANG_IMAGE}
 
 # Switch to root for installation
 USER root
