@@ -6,15 +6,15 @@ A collection of specialized polyglot Docker containers for the Jettison project.
 
 **Split Container Design**: Instead of one monolithic image, we provide 7 specialized containers that can be used independently or together:
 
-| Container | Purpose | Size (approx) | Base |
-|-----------|---------|---------------|------|
-| `jon-babylon-base` | Common tools & user setup | ~200MB | Ubuntu 22.04 |
-| `jon-babylon-jvm` | Java, Kotlin, Clojure | ~800MB | base |
-| `jon-babylon-clang` | C/C++ development | ~400MB | base |
-| `jon-babylon-python` | Python with Nuitka | ~600MB | clang |
-| `jon-babylon-rust` | Rust development | ~500MB | base |
-| `jon-babylon-go` | Go development | ~400MB | base |
-| `jon-babylon-web` | Node.js, TypeScript, Bun | ~500MB | base |
+| Container | Purpose | Base |
+|-----------|---------|------|
+| `jon-babylon-base` | Common tools & user setup | Ubuntu 22.04 |
+| `jon-babylon-jvm` | Java, Kotlin, Clojure | base |
+| `jon-babylon-clang` | C/C++ development | base |
+| `jon-babylon-python` | Python with Nuitka | clang |
+| `jon-babylon-rust` | Rust development | base |
+| `jon-babylon-go` | Go development | base |
+| `jon-babylon-web` | Node.js, TypeScript, Bun | base |
 
 ## 🎯 Benefits
 
@@ -189,19 +189,9 @@ Run comprehensive tests:
 ./tests/nodejs/run_test.sh    # Test Web container
 ```
 
-## 📊 Container Sizes
+## 📊 Multi-Architecture Support
 
-| Container | AMD64 | ARM64 |
-|-----------|-------|-------|
-| base | ~200MB | ~200MB |
-| jvm | ~800MB | ~800MB |
-| clang | ~400MB | ~400MB |
-| python | ~600MB | ~600MB |
-| rust | ~500MB | ~500MB |
-| go | ~400MB | ~400MB |
-| web | ~500MB | ~500MB |
-
-**Total if all used**: ~3.4GB (vs ~5GB for monolithic)
+All containers are built for both AMD64 and ARM64 architectures, ensuring compatibility across different platforms including Apple Silicon, AWS Graviton, and traditional x86_64 systems.
 
 ## 🔄 CI/CD
 
@@ -254,23 +244,16 @@ All containers run as user `developer` (UID 1000) by default. To run as root:
 docker run --user root container:tag
 ```
 
-## 🚢 Migration from Monolithic
+## 🚢 Container Selection Guide
 
-If you were using the old monolithic `jon-babylon` image:
+Choose containers based on your project needs:
 
-1. Identify which tools you actually use
-2. Pull only the containers you need
-3. Update your scripts to use specific containers
-4. Remove references to the monolithic image
-
-Example migration:
-```bash
-# Old (monolithic)
-docker run jon-babylon:latest javac MyApp.java
-
-# New (specialized)
-docker run jon-babylon-jvm:latest javac MyApp.java
-```
+- **JVM**: For Java, Kotlin, Clojure, Android, or any JVM-based development
+- **Clang**: For C/C++ system programming, embedded development, or high-performance computing
+- **Python**: For data science, machine learning, scripting, or compiled Python applications
+- **Rust**: For systems programming, WebAssembly, or memory-safe applications
+- **Go**: For cloud-native applications, microservices, or CLI tools
+- **Web**: For frontend development, Node.js backends, or full-stack JavaScript/TypeScript projects
 
 ## 📈 Performance
 
