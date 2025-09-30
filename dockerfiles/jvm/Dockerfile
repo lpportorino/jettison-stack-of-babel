@@ -8,10 +8,8 @@ USER root
 # Install SDKMAN and JVM tools
 COPY dockerfiles/jvm/tools /tmp/tools
 
-RUN chmod +x /tmp/tools/**/*.sh && \
+RUN chmod +x /tmp/tools/*.sh /tmp/tools/**/*.sh && \
     /tmp/tools/sdkman.sh && \
-    /tmp/tools/java/install.sh && \
-    /tmp/tools/kotlin/install.sh && \
     /tmp/tools/clojure/install.sh && \
     rm -rf /tmp/tools
 

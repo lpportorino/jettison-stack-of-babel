@@ -25,7 +25,7 @@ RUN mkdir -p /home/developer/go/{bin,src,pkg} && \
 RUN export GOPATH=/home/developer/go && \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
     go install github.com/go-task/task/v3/cmd/task@latest && \
-    go install github.com/cosmtrek/air@latest && \
+    go install github.com/air-verse/air@latest && \
     go install golang.org/x/tools/gopls@latest && \
     go install golang.org/x/tools/cmd/goimports@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest
