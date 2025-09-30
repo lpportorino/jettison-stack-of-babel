@@ -6,6 +6,12 @@ FROM ${CLANG_IMAGE}
 # Switch to root for installation
 USER root
 
+# Install patchelf for Nuitka standalone builds
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends patchelf && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install Python via pyenv
 COPY dockerfiles/python/tools /tmp/tools
 
