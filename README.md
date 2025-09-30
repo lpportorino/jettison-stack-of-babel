@@ -30,29 +30,31 @@ A collection of specialized polyglot Docker containers for the Jettison project.
 
 ```bash
 # Java/Kotlin/Clojure Development
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-jvm:latest
 
 # Python Development with Nuitka
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-python:latest
 
 # Rust Development
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-rust:latest
 
 # Web Development (Node.js, TypeScript, Bun)
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-web:latest
 
 # C/C++ Development
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-clang:latest
 
 # Go Development
-docker run -it --rm -v $(pwd):/workspace \
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
   ghcr.io/lpportorino/jon-babylon-go:latest
 ```
+
+**Note**: The `-u $(id -u):$(id -g)` flag runs the container with your host user ID, ensuring files created in the container have proper ownership on your host system.
 
 ### Using Docker Compose
 
@@ -171,7 +173,7 @@ docker build -t jon-babylon-python:latest -f dockerfiles/python/Dockerfile .
 
 ## 🧪 Testing
 
-Each container includes a version check script:
+Each container includes comprehensive test suites and a version check script:
 
 ```bash
 # Check all tools in a container
@@ -180,19 +182,41 @@ docker run --rm ghcr.io/lpportorino/jon-babylon-python:latest check_versions.sh
 docker run --rm ghcr.io/lpportorino/jon-babylon-rust:latest check_versions.sh
 ```
 
-Tests are run automatically in CI/CD. Each container includes test suites that verify all tools are properly installed and functioning.
+### Local Testing
+
+Run the comprehensive test suite locally:
+
+```bash
+# Run all container tests
+./test-local.sh
+
+# Tests include:
+# - Java/Maven/Gradle compilation
+# - Kotlin/Clojure projects
+# - C/C++ compilation with Clang
+# - Python/Nuitka compilation
+# - Rust cargo builds
+# - Go module tests
+# - Node.js/TypeScript/Bun tests
+```
+
+Tests are automatically run in CI/CD before pushing images to the registry, ensuring all tools are properly installed and functioning.
 
 ## 📊 Multi-Architecture Support
 
-All containers are built for both AMD64 and ARM64 architectures, ensuring compatibility across different platforms including Apple Silicon, AWS Graviton, and traditional x86_64 systems.
+All containers are built natively for both AMD64 and ARM64 architectures using GitHub's native runners (no QEMU emulation), ensuring:
+- Native performance on all platforms
+- Full compatibility with Apple Silicon Macs
+- Optimized for AWS Graviton instances
+- Perfect for traditional x86_64 systems
 
 ## 🔄 CI/CD
 
 GitHub Actions automatically:
-1. Builds all containers in parallel
-2. Tests each container
-3. Pushes to GitHub Container Registry
-4. Creates multi-arch manifests
+1. Builds all containers in parallel on native runners (AMD64 and ARM64)
+2. Runs comprehensive test suites for each container
+3. Only pushes to GitHub Container Registry if all tests pass
+4. Creates multi-arch manifests for seamless platform support
 
 Build status: ![Build Status](https://github.com/lpportorino/jettison-stack-of-babel/actions/workflows/build-split.yml/badge.svg)
 
@@ -201,14 +225,22 @@ Build status: ![Build Status](https://github.com/lpportorino/jettison-stack-of-b
 ```
 jettison-stack-of-babel/
 ├── dockerfiles/           # Container definitions
-│   ├── base/             # Base container
+│   ├── base/             # Base container with common tools
+│   │   └── tests/        # Base container tests
 │   ├── jvm/              # Java/Kotlin/Clojure
+│   │   └── tests/        # JVM language tests
 │   ├── clang/            # C/C++ tools
+│   │   └── tests/        # C/C++ compilation tests
 │   ├── python/           # Python with Nuitka
+│   │   └── tests/        # Python/Nuitka tests
 │   ├── rust/             # Rust toolchain
+│   │   └── tests/        # Rust cargo tests
 │   ├── go/               # Go development
+│   │   └── tests/        # Go module tests
 │   └── web/              # Node.js/Web tools
+│       └── tests/        # Web/TypeScript tests
 ├── docker-compose.yml    # Multi-container setup
+├── test-local.sh         # Local test runner
 └── .github/workflows/    # CI/CD pipelines
 ```
 
@@ -230,10 +262,23 @@ docker run -v $(pwd):/workspace container:tag
 
 ### User Permissions
 
-All containers run as user `developer` (UID 1000) by default. To run as root:
+Containers support flexible user permissions:
+
 ```bash
-docker run --user root container:tag
+# Run with your host user ID (recommended for development)
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace container:tag
+
+# Run as default developer user (UID 1000)
+docker run -it --rm -v $(pwd):/workspace container:tag
+
+# Run as root (for system-level operations)
+docker run -it --rm --user root -v $(pwd):/workspace container:tag
 ```
+
+The containers are optimized to work with any user ID, making them perfect for:
+- Local development with proper file ownership
+- CI/CD pipelines with runner-specific users
+- Multi-user development environments
 
 ## 🚢 Container Selection Guide
 
@@ -255,12 +300,22 @@ Improvements over monolithic approach:
 - **Startup**: 2x faster container initialization
 - **CI/CD**: 60% reduction in pipeline time
 
+## 🎉 Recent Improvements
+
+- **Native ARM64 builds**: No QEMU emulation, using GitHub's native ARM64 runners
+- **Host user support**: Containers work seamlessly with any user ID
+- **Comprehensive testing**: All containers tested before pushing to registry
+- **Nuitka support**: Python container includes working Nuitka compilation
+- **Updated tools**: Latest versions of all languages and tools
+- **Better caching**: Improved CI/CD caching for faster builds
+- **Test automation**: Local test script with detailed logging
+
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch
 3. Add/modify containers as needed
-4. Ensure all tests pass
+4. Run `./test-local.sh` to ensure all tests pass
 5. Submit a pull request
 
 ## 📄 License
