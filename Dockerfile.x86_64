@@ -113,7 +113,12 @@ RUN chmod +x /tmp/tools/build-tools/sdkman.sh && \
     /tmp/tools/build-tools/sdkman.sh && \
     rm /tmp/tools/build-tools/*.sh
 
-# Stage 10: Web tools and package managers
+# Stage 10: Bun JavaScript runtime
+RUN chmod +x /tmp/tools/bun/install.sh && \
+    /tmp/tools/bun/install.sh && \
+    rm /tmp/tools/bun/install.sh
+
+# Stage 11: Web tools and package managers
 RUN chmod +x /tmp/tools/package-managers/install.sh \
               /tmp/tools/web-tools/install.sh \
               /tmp/tools/typescript/install.sh && \
@@ -124,7 +129,7 @@ RUN chmod +x /tmp/tools/package-managers/install.sh \
        /tmp/tools/web-tools/install.sh \
        /tmp/tools/typescript/install.sh
 
-# Stage 11: Final setup
+# Stage 12: Final setup
 COPY scripts/check_versions.sh /scripts/check_versions.sh
 RUN chmod +x /scripts/check_versions.sh
 

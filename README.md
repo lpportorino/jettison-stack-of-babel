@@ -29,7 +29,7 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Nuitka** - Python to C++ compiler (configured with Clang)
 - **TypeScript** - JavaScript with types
 - **esbuild** - Fast JavaScript/TypeScript bundler
-- **Bun** - All-in-one JavaScript runtime
+- **Bun** - 1.1.42 - All-in-one JavaScript runtime
 
 ### Build Tools
 - **Maven** - 3.9.11 via SDKMAN
@@ -65,7 +65,7 @@ Provides a consistent, reproducible development environment with all necessary c
 - **@lit/localize** - Internationalization for Lit
 - **TypeScript** - JavaScript with types
 - **esbuild** - Fast bundler
-- **Bun** - All-in-one JavaScript runtime
+- **Bun** - 1.1.42 - All-in-one JavaScript runtime
 
 ## 🚀 Quick Start
 
