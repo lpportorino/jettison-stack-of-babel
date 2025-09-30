@@ -291,43 +291,6 @@ Choose containers based on your project needs:
 - **Go**: For cloud-native applications, microservices, or CLI tools
 - **Web**: For frontend development, Node.js backends, or full-stack JavaScript/TypeScript projects
 
-## 📈 Performance
-
-Improvements over monolithic approach:
-- **Build time**: 5-10x faster (parallel builds)
-- **Pull time**: 3-5x faster (smaller images)
-- **Storage**: 40% less disk space
-- **Startup**: 2x faster container initialization
-- **CI/CD**: 60% reduction in pipeline time
-
-## 🎉 Recent Improvements
-
-- **Native ARM64 builds**: No QEMU emulation, using GitHub's native ARM64 runners
-- **Host user support**: Containers work seamlessly with any user ID
-- **Comprehensive testing**: All containers tested before pushing to registry
-- **Nuitka support**: Python container includes working Nuitka compilation
-- **Updated tools**: Latest versions of all languages and tools
-- **Better caching**: Improved CI/CD caching for faster builds
-- **Test automation**: Local test script with detailed logging
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Add/modify containers as needed
-4. Run `./test-local.sh` to ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/lpportorino/jettison-stack-of-babel)
-- [Container Registry](https://ghcr.io/lpportorino)
-- [Issue Tracker](https://github.com/lpportorino/jettison-stack-of-babel/issues)
-
 ## 🏷️ Tags
 
 All containers follow this tagging scheme:
@@ -338,5 +301,10 @@ All containers follow this tagging scheme:
 - `{sha}-amd64` - Specific commit AMD64
 - `{sha}-arm64` - Specific commit ARM64
 
----
-*Built with ❤️ for polyglot developers*
+## 📄 License
+
+This project (including Dockerfiles, scripts, and configuration) is licensed under the GNU General Public License v3.0 (GPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+### ⚠️ Important License Notice
+
+**The tools and software packages installed within the Docker image retain their original licenses.**
