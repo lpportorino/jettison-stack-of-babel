@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Base image - built first as all others depend on it
+  base:
+    build:
+      context: .
+      dockerfile: dockerfiles/base/Dockerfile
+    image: jon-babylon-base:latest
+    container_name: jon-babylon-base
+
+  # JVM Container - Java, Kotlin, Clojure
+  jvm:
+    build:
+      context: .
+      dockerfile: dockerfiles/jvm/Dockerfile
+    image: jon-babylon-jvm:latest
+    container_name: jon-babylon-jvm
+    depends_on:
+      - base
+    volumes:
+      - ./tests/java:/workspace/java
+      - ./tests/kotlin:/workspace/kotlin
+      - ./tests/clojure:/workspace/clojure
+
+  # Clang Container - C/C++ development
+  clang:
+    build:
+      context: .
+      dockerfile: dockerfiles/clang/Dockerfile
+    image: jon-babylon-clang:latest
+    container_name: jon-babylon-clang
+    depends_on:
+      - base
+    volumes:
+      - ./tests/c:/workspace/c
+      - ./tests/cpp:/workspace/cpp
+
+  # Python Container - Python with Nuitka
+  python:
+    build:
+      context: .
+      dockerfile: dockerfiles/python/Dockerfile
+    image: jon-babylon-python:latest
+    container_name: jon-babylon-python
+    depends_on:
+      - clang
+    volumes:
+      - ./tests/python:/workspace/python
+
+  # Rust Container
+  rust:
+    build:
+      context: .
+      dockerfile: dockerfiles/rust/Dockerfile
+    image: jon-babylon-rust:latest
+    container_name: jon-babylon-rust
+    depends_on:
+      - base
+    volumes:
+      - ./tests/rust:/workspace/rust
+
+  # Go Container
+  go:
+    build:
+      context: .
+      dockerfile: dockerfiles/go/Dockerfile
+    image: jon-babylon-go:latest
+    container_name: jon-babylon-go
+    depends_on:
+      - base
+    volumes:
+      - ./tests/go:/workspace/go
+
+  # Web Container - Node.js, TypeScript, Bun
+  web:
+    build:
+      context: .
+      dockerfile: dockerfiles/web/Dockerfile
+    image: jon-babylon-web:latest
+    container_name: jon-babylon-web
+    depends_on:
+      - base
+    volumes:
+      - ./tests/nodejs:/workspace/nodejs
+      - ./tests/web:/workspace/web
+      - ./tests/typescript:/workspace/typescript
+
+# Networks
+networks:
+  default:
+    name: jon-babylon-network
+    driver: bridge
