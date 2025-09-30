@@ -136,7 +136,8 @@ RUN chmod +x /tmp/tools/package-managers/install.sh \
 # Stage 12: Final setup and environment configuration
 COPY scripts/check_versions.sh /scripts/check_versions.sh
 COPY scripts/setup_environment.sh /scripts/setup_environment.sh
-RUN chmod +x /scripts/check_versions.sh /scripts/setup_environment.sh && \
+COPY scripts/run_test_wrapper.sh /usr/local/bin/run_test_wrapper.sh
+RUN chmod +x /scripts/check_versions.sh /scripts/setup_environment.sh /usr/local/bin/run_test_wrapper.sh && \
     /scripts/setup_environment.sh
 
 # Set PATH for all subsequent commands
@@ -153,12 +154,18 @@ ENV BUN_INSTALL="/opt/bun"
 ENV CC="clang"
 ENV CXX="clang++"
 
-# Create workspace directory
+# Create workspace directory and ensure proper ownership
 RUN mkdir -p /workspace && \
-    chown -R developer:developer /workspace
+    chown -R developer:developer /workspace && \
+    chmod 755 /workspace
 
 # Clean up temporary files
 RUN rm -rf /tmp/tools /tmp/scripts
+
+# Ensure all tool directories are accessible by developer
+RUN chown -R developer:developer /opt/pyenv /opt/cargo /opt/rustup /opt/bun 2>/dev/null || true && \
+    chown -R developer:developer /opt/sdkman 2>/dev/null || true && \
+    chmod -R 755 /opt/pyenv /opt/cargo /opt/rustup /opt/bun 2>/dev/null || true
 
 # Switch to non-root user
 USER developer
