@@ -6,9 +6,11 @@ FROM ${CLANG_IMAGE}
 # Switch to root for installation
 USER root
 
-# Install patchelf for Nuitka standalone builds
+# Install patchelf and newer binutils for Nuitka standalone builds
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends patchelf && \
+    apt-get install -y --no-install-recommends \
+        patchelf \
+        binutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -23,6 +25,8 @@ RUN chmod +x /tmp/tools/**/*.sh && \
 ENV PYENV_ROOT="/opt/pyenv"
 ENV PATH="/opt/pyenv/bin:/opt/pyenv/shims:${PATH}"
 ENV NUITKA_CACHE_DIR="/opt/nuitka-cache"
+# Add Python shared library to LD_LIBRARY_PATH for Nuitka
+ENV LD_LIBRARY_PATH="/opt/pyenv/versions/3.13.7/lib:${LD_LIBRARY_PATH}"
 
 # Create symlinks for system-wide access
 RUN ln -sf /opt/pyenv/versions/3.13.7/bin/python3 /usr/local/bin/python3 && \

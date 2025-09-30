@@ -84,9 +84,7 @@ export class LocalizedComponent extends LitElement {
         </select>
       </div>
 
-      <div class="greeting">
-        ${msg(str`Welcome, ${this.userName}!`)}
-      </div>
+      <div class="greeting">${msg(str`Welcome, ${this.userName}!`)}</div>
 
       <div class="count-display">
         <p>${msg(str`You have clicked ${this.count} times`)}</p>

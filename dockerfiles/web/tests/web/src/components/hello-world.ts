@@ -51,7 +51,10 @@ export class HelloWorld extends LitElement {
     return {
       hex: color.hex(),
       rgb: color.rgb().join(', '),
-      hsl: color.hsl().map((v, i) => (i === 0 ? Math.round(v) : `${Math.round(v * 100)}%`)).join(', '),
+      hsl: color
+        .hsl()
+        .map((v, i) => (i === 0 ? Math.round(v) : `${Math.round(v * 100)}%`))
+        .join(', '),
     };
   }
 
@@ -66,9 +69,9 @@ export class HelloWorld extends LitElement {
         <button @click=${this.toggleHighlight}>Toggle Highlight</button>
 
         <div class="color-demo" style="background-color: ${colorInfo.hex}">
-          <strong>Random Color (chroma-js):</strong><br>
-          HEX: ${colorInfo.hex}<br>
-          RGB: ${colorInfo.rgb}<br>
+          <strong>Random Color (chroma-js):</strong><br />
+          HEX: ${colorInfo.hex}<br />
+          RGB: ${colorInfo.rgb}<br />
           HSL: ${colorInfo.hsl}
         </div>
       </div>

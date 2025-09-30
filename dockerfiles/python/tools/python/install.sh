@@ -54,7 +54,7 @@ PYTHON_VERSIONS=(
 for version in "${PYTHON_VERSIONS[@]}"; do
     echo "Installing Python $version..."
     # Use configure options to reduce size
-    CONFIGURE_OPTS="--enable-optimizations --with-lto --enable-loadable-sqlite-extensions" \
+    CONFIGURE_OPTS="--enable-optimizations --with-lto --enable-loadable-sqlite-extensions --enable-shared" \
     PYTHON_CONFIGURE_OPTS="--disable-test-modules" \
     pyenv install -s $version
 

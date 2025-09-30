@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="es" source-language="en" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="s100719550fb4b347">
+  <source>Localization Demo</source>
+</trans-unit>
+<trans-unit id="s350e441c4e109239">
+  <source>Select Language</source>
+</trans-unit>
+<trans-unit id="s6dfd1a978586d8de">
+  <source>Welcome, <x id="0" equiv-text="${this.userName}"/>!</source>
+</trans-unit>
+<trans-unit id="s073707bcbb8b6623">
+  <source>You have clicked <x id="0" equiv-text="${this.count}"/> times</source>
+</trans-unit>
+<trans-unit id="s6e3b2b2693c1742f">
+  <source>Click me</source>
+</trans-unit>
+<trans-unit id="s255857544a9d5ec0">
+  <source>Reset</source>
+</trans-unit>
+<trans-unit id="sedfdd0614e125bd7">
+  <source>This component demonstrates localization with @lit/localize</source>
+</trans-unit>
+</body>
+</file>
+</xliff>

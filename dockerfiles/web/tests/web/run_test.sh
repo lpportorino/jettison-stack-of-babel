@@ -28,12 +28,12 @@ run_test() {
     echo -n "Testing $test_name... "
     if eval $test_command &> /tmp/test_output.log; then
         echo -e "${GREEN}✓${NC}"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗${NC}"
         echo "  Error output:"
         cat /tmp/test_output.log | head -10
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 }
 
@@ -49,14 +49,14 @@ else
     echo -e "${GREEN}✓ Bun found${NC}"
     BUN_CMD="bun"
     BUILD_CMD="bun run"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 
     # 2. Test package installation
     echo ""
     echo "Installing dependencies with Bun..."
     if bun install &> /tmp/bun_install.log; then
         echo -e "${GREEN}✓ Dependencies installed${NC}"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${YELLOW}⚠ Failed to install with Bun, trying npm...${NC}"
         npm install &> /tmp/npm_install.log
@@ -86,7 +86,7 @@ mkdir -p xliff
 # Extract messages (this would normally extract translatable strings)
 if npx lit-localize extract &> /tmp/localize_output.log; then
     echo -e "${GREEN}✓ Localization extraction works${NC}"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${YELLOW}⚠ Localization extraction skipped (no translations yet)${NC}"
 fi
@@ -99,7 +99,7 @@ echo ""
 echo "Verifying build outputs..."
 if [ -f "dist/app.js" ]; then
     echo -e "${GREEN}✓ dist/app.js created${NC}"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 
     # Check file size
     FILE_SIZE=$(stat -f%z "dist/app.js" 2>/dev/null || stat -c%s "dist/app.js" 2>/dev/null)
@@ -111,7 +111,7 @@ fi
 
 if [ -f "dist/app.js.map" ]; then
     echo -e "${GREEN}✓ Source map created${NC}"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${YELLOW}⚠ No source map found${NC}"
 fi
