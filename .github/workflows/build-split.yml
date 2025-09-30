@@ -150,11 +150,13 @@ jobs:
                 TEST_NAME=$(basename "$test_subdir")
                 echo "Running $TEST_NAME tests..."
 
+                # Copy test directory and run tests
+                # Use bash to run the script directly, avoiding chmod issues
                 docker run --rm \
-                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -v "$(pwd)/$test_subdir:/workspace:ro" \
                   -w /workspace \
                   ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} \
-                  bash -c "chmod +x run_test.sh && ./run_test.sh" || exit 1
+                  bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
               fi
@@ -239,11 +241,12 @@ jobs:
                 TEST_NAME=$(basename "$test_subdir")
                 echo "Running $TEST_NAME tests..."
 
+                # Use bash to run the script directly, avoiding chmod issues
                 docker run --rm \
-                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -v "$(pwd)/$test_subdir:/workspace:ro" \
                   -w /workspace \
                   ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} \
-                  bash -c "chmod +x run_test.sh && ./run_test.sh" || exit 1
+                  bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
               fi
