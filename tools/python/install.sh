@@ -58,11 +58,11 @@ for version in "${PYTHON_VERSIONS[@]}"; do
 done
 
 # Set global Python version
-pyenv global 3.13.1
+pyenv global 3.13.7
 
 # Create symlinks for system-wide access
-ln -sf $PYENV_ROOT/versions/3.13.1/bin/python3 /usr/local/bin/python3
-ln -sf $PYENV_ROOT/versions/3.13.1/bin/pip3 /usr/local/bin/pip3
+ln -sf $PYENV_ROOT/versions/3.13.7/bin/python3 /usr/local/bin/python3
+ln -sf $PYENV_ROOT/versions/3.13.7/bin/pip3 /usr/local/bin/pip3
 ln -sf /usr/local/bin/python3 /usr/local/bin/python
 ln -sf /usr/local/bin/pip3 /usr/local/bin/pip
 
