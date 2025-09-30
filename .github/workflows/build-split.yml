@@ -153,7 +153,7 @@ jobs:
                 # Copy test directory and run tests
                 # Use bash to run the script directly, avoiding chmod issues
                 docker run --rm \
-                  -v "$(pwd)/$test_subdir:/workspace:ro" \
+                  -v "$(pwd)/$test_subdir:/workspace" \
                   -w /workspace \
                   ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} \
                   bash run_test.sh || exit 1
@@ -243,7 +243,7 @@ jobs:
 
                 # Use bash to run the script directly, avoiding chmod issues
                 docker run --rm \
-                  -v "$(pwd)/$test_subdir:/workspace:ro" \
+                  -v "$(pwd)/$test_subdir:/workspace" \
                   -w /workspace \
                   ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} \
                   bash run_test.sh || exit 1
