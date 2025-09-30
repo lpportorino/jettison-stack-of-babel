@@ -5,11 +5,11 @@ FROM ghcr.io/lpportorino/jon-babylon-base:latest
 USER root
 
 # Install Go
-COPY tools/go/install.sh /tmp/install-go.sh
+COPY dockerfiles/go/tools /tmp/tools
 
-RUN chmod +x /tmp/install-go.sh && \
-    /tmp/install-go.sh && \
-    rm -f /tmp/install-go.sh
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/golang/install.sh && \
+    rm -rf /tmp/tools
 
 # Setup environment
 ENV GOROOT="/usr/local/go"

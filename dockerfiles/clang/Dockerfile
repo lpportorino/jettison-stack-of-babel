@@ -5,11 +5,11 @@ FROM ghcr.io/lpportorino/jon-babylon-base:latest
 USER root
 
 # Install LLVM/Clang and build tools
-COPY tools/clang/install.sh /tmp/install-clang.sh
+COPY dockerfiles/clang/tools /tmp/tools
 
-RUN chmod +x /tmp/install-clang.sh && \
-    /tmp/install-clang.sh && \
-    rm -f /tmp/install-clang.sh
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/clang/install.sh && \
+    rm -rf /tmp/tools
 
 # Install additional C/C++ development tools
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

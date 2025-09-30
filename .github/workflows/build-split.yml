@@ -5,15 +5,11 @@ on:
     branches: [ main, develop ]
     paths:
       - 'dockerfiles/**'
-      - 'tools/**'
-      - 'scripts/**'
       - '.github/workflows/build-split.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'dockerfiles/**'
-      - 'tools/**'
-      - 'scripts/**'
       - '.github/workflows/build-split.yml'
   workflow_dispatch:
     inputs:
@@ -269,16 +265,16 @@ jobs:
               TEST_DIRS="go"
               ;;
             web)
-              TEST_DIRS="nodejs web typescript"
+              TEST_DIRS="nodejs web"
               ;;
           esac
 
           # Run tests for each directory
           for dir in $TEST_DIRS; do
-            if [ -d "tests/$dir" ]; then
+            if [ -d "dockerfiles/${{ matrix.container }}/tests/$dir" ]; then
               echo "Running $dir tests..."
               docker run --rm \
-                -v ${{ github.workspace }}/tests/$dir:/workspace \
+                -v ${{ github.workspace }}/dockerfiles/${{ matrix.container }}/tests/$dir:/workspace \
                 --platform ${{ matrix.platform }} \
                 ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-${{ matrix.arch }} \
                 run_test_wrapper.sh

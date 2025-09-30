@@ -5,19 +5,15 @@ FROM ghcr.io/lpportorino/jon-babylon-base:latest
 USER root
 
 # Install Node.js, Bun, and web tools
-COPY tools/nodejs/install.sh /tmp/install-nodejs.sh
-COPY tools/bun/install.sh /tmp/install-bun.sh
-COPY tools/package-managers/install.sh /tmp/install-package-managers.sh
-COPY tools/web-tools/install.sh /tmp/install-web-tools.sh
-COPY tools/typescript/install.sh /tmp/install-typescript.sh
+COPY dockerfiles/web/tools /tmp/tools
 
-RUN chmod +x /tmp/install-*.sh && \
-    /tmp/install-nodejs.sh && \
-    /tmp/install-bun.sh && \
-    /tmp/install-package-managers.sh && \
-    /tmp/install-web-tools.sh && \
-    /tmp/install-typescript.sh && \
-    rm -f /tmp/install-*.sh
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/nodejs/install.sh && \
+    /tmp/tools/bun/install.sh && \
+    /tmp/tools/package-managers/install.sh && \
+    /tmp/tools/web-tools/install.sh && \
+    /tmp/tools/typescript/install.sh && \
+    rm -rf /tmp/tools
 
 # Setup environment
 ENV BUN_INSTALL="/opt/bun"

@@ -6,12 +6,11 @@ FROM ghcr.io/lpportorino/jon-babylon-clang:latest
 USER root
 
 # Install Python via pyenv
-COPY tools/python/install.sh /tmp/install-python.sh
-COPY tools/python/requirements.txt /tmp/requirements.txt
+COPY dockerfiles/python/tools /tmp/tools
 
-RUN chmod +x /tmp/install-python.sh && \
-    /tmp/install-python.sh && \
-    rm -f /tmp/install-python.sh /tmp/requirements.txt
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/python/install.sh && \
+    rm -rf /tmp/tools
 
 # Setup environment
 ENV PYENV_ROOT="/opt/pyenv"

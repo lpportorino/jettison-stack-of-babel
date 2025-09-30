@@ -48,8 +48,9 @@ RUN mkdir -p /workspace && \
     chmod 755 /workspace
 
 # Copy common scripts
-COPY --chown=developer:developer scripts/run_test_wrapper.sh /usr/local/bin/run_test_wrapper.sh
-RUN chmod +x /usr/local/bin/run_test_wrapper.sh
+COPY --chown=developer:developer dockerfiles/base/scripts/run_test_wrapper.sh /usr/local/bin/run_test_wrapper.sh
+COPY --chown=developer:developer dockerfiles/base/scripts/check_versions.sh /usr/local/bin/check_versions.sh
+RUN chmod +x /usr/local/bin/run_test_wrapper.sh /usr/local/bin/check_versions.sh
 
 # Set up basic environment
 ENV PATH="/home/developer/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"

@@ -5,15 +5,14 @@ FROM ghcr.io/lpportorino/jon-babylon-base:latest
 USER root
 
 # Install SDKMAN and JVM tools
-COPY tools/java/install.sh /tmp/install-java.sh
-COPY tools/kotlin/install.sh /tmp/install-kotlin.sh
-COPY tools/clojure/install.sh /tmp/install-clojure.sh
+COPY dockerfiles/jvm/tools /tmp/tools
 
-RUN chmod +x /tmp/install-*.sh && \
-    /tmp/install-java.sh && \
-    /tmp/install-kotlin.sh && \
-    /tmp/install-clojure.sh && \
-    rm -f /tmp/install-*.sh
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/sdkman.sh && \
+    /tmp/tools/java/install.sh && \
+    /tmp/tools/kotlin/install.sh && \
+    /tmp/tools/clojure/install.sh && \
+    rm -rf /tmp/tools
 
 # Setup environment variables
 ENV SDKMAN_DIR="/opt/sdkman"
@@ -40,6 +39,10 @@ RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.cache && \
     find /opt -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+
+# Copy version check script
+COPY --chown=developer:developer dockerfiles/jvm/check_versions.sh /usr/local/bin/check_versions.sh
+RUN chmod +x /usr/local/bin/check_versions.sh
 
 # Switch back to developer
 USER developer

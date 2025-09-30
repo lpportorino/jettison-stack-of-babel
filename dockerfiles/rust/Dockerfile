@@ -5,11 +5,11 @@ FROM ghcr.io/lpportorino/jon-babylon-base:latest
 USER root
 
 # Install Rust via rustup
-COPY tools/rust/install.sh /tmp/install-rust.sh
+COPY dockerfiles/rust/tools /tmp/tools
 
-RUN chmod +x /tmp/install-rust.sh && \
-    /tmp/install-rust.sh && \
-    rm -f /tmp/install-rust.sh
+RUN chmod +x /tmp/tools/**/*.sh && \
+    /tmp/tools/rust/install.sh && \
+    rm -rf /tmp/tools
 
 # Setup environment
 ENV CARGO_HOME="/opt/cargo"
