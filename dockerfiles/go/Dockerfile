@@ -17,9 +17,11 @@ ENV GOROOT="/usr/local/go"
 ENV GOPATH="/home/developer/go"
 ENV PATH="/usr/local/go/bin:/home/developer/go/bin:${PATH}"
 
-# Create Go workspace directories
-RUN mkdir -p /home/developer/go/{bin,src,pkg} && \
-    chown -R developer:developer /home/developer/go
+# Create Go workspace directories with permissive permissions
+RUN mkdir -p /tmp/go/{bin,src,pkg} && \
+    chmod -R 777 /tmp/go && \
+    mkdir -p /home/developer/go/{bin,src,pkg} && \
+    chmod -R 755 /home/developer/go
 
 # Install Go tools
 RUN export GOPATH=/home/developer/go && \
@@ -30,9 +32,10 @@ RUN export GOPATH=/home/developer/go && \
     go install golang.org/x/tools/cmd/goimports@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest
 
-# Fix permissions
-RUN chown -R developer:developer /home/developer/go && \
-    chmod -R 755 /home/developer/go
+# Fix permissions for any user
+RUN chmod -R 755 /home/developer/go && \
+    # Make go module cache accessible
+    mkdir -p /tmp/go-cache && chmod 777 /tmp/go-cache
 
 # Clean up
 RUN apt-get clean && \

@@ -29,9 +29,12 @@ RUN ln -sf /opt/sdkman/candidates/java/current/bin/java /usr/local/bin/java && \
     ln -sf /opt/sdkman/candidates/gradle/current/bin/gradle /usr/local/bin/gradle && \
     ln -sf /opt/sdkman/candidates/leiningen/current/bin/lein /usr/local/bin/lein
 
-# Fix permissions
-RUN chown -R developer:developer /opt/sdkman 2>/dev/null || true && \
-    chmod -R 755 /opt/sdkman 2>/dev/null || true
+# Fix permissions for any user
+RUN chmod -R 755 /opt/sdkman /opt/clojure 2>/dev/null || true && \
+    # Make SDKMAN directories writable for any user
+    mkdir -p /opt/sdkman/tmp && chmod 777 /opt/sdkman/tmp && \
+    mkdir -p /opt/sdkman/archives && chmod 777 /opt/sdkman/archives && \
+    mkdir -p /opt/sdkman/candidates && chmod -R 755 /opt/sdkman/candidates
 
 # Clean up
 RUN apt-get clean && \

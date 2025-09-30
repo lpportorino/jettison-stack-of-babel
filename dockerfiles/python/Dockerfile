@@ -51,14 +51,12 @@ RUN pip install --no-cache-dir \
     numpy \
     requests
 
-# Fix permissions
-RUN chown -R developer:developer /opt/pyenv 2>/dev/null || true && \
-    chmod -R 755 /opt/pyenv 2>/dev/null || true && \
-    mkdir -p /opt/nuitka-cache && \
-    chown -R developer:developer /opt/nuitka-cache && \
-    mkdir -p /opt/pyenv/shims && \
-    chown -R developer:developer /opt/pyenv/shims && \
-    chmod 755 /opt/pyenv/shims
+# Fix permissions for any user
+RUN chmod -R 755 /opt/pyenv 2>/dev/null || true && \
+    mkdir -p /opt/nuitka-cache && chmod 777 /opt/nuitka-cache && \
+    mkdir -p /opt/pyenv/shims && chmod 777 /opt/pyenv/shims && \
+    # Make pyenv cache writable
+    mkdir -p /opt/pyenv/.cache && chmod 777 /opt/pyenv/.cache
 
 # Clean up
 RUN apt-get clean && \

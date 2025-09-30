@@ -150,26 +150,18 @@ jobs:
                 TEST_NAME=$(basename "$test_subdir")
                 echo "Running $TEST_NAME tests..."
 
-                # Create container, copy test files with correct ownership, and run tests
-                CONTAINER_ID=$(docker create \
-                  -w /home/developer \
+                # Run tests with host user ID to avoid permission issues
+                docker run --rm \
+                  -u "$(id -u):$(id -g)" \
+                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -w /workspace \
+                  -e HOME=/tmp/home \
+                  -e GOPATH=/tmp/go \
+                  -e GOCACHE=/tmp/go-cache \
+                  -e GRADLE_USER_HOME=/tmp/gradle \
+                  -e MAVEN_USER_HOME=/tmp/maven \
                   ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} \
-                  bash -c "cd test_workspace && bash run_test.sh")
-
-                # Copy test files into container
-                docker cp "$test_subdir/." "$CONTAINER_ID:/home/developer/test_workspace"
-
-                # Start container and run tests
-                docker start -a "$CONTAINER_ID"
-                EXIT_CODE=$?
-
-                # Clean up
-                docker rm "$CONTAINER_ID" > /dev/null
-
-                # Exit if tests failed
-                if [ $EXIT_CODE -ne 0 ]; then
-                  exit $EXIT_CODE
-                fi
+                  bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
               fi
@@ -254,26 +246,16 @@ jobs:
                 TEST_NAME=$(basename "$test_subdir")
                 echo "Running $TEST_NAME tests..."
 
-                # Create container, copy test files with correct ownership, and run tests
-                CONTAINER_ID=$(docker create \
-                  -w /home/developer \
+                # Run tests with host user ID to avoid permission issues
+                docker run --rm \
+                  -u "$(id -u):$(id -g)" \
+                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -w /workspace \
+                  -e HOME=/tmp/home \
+                  -e PYTHONUSERBASE=/tmp/python \
+                  -e PIP_CACHE_DIR=/tmp/pip-cache \
                   ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} \
-                  bash -c "cd test_workspace && bash run_test.sh")
-
-                # Copy test files into container
-                docker cp "$test_subdir/." "$CONTAINER_ID:/home/developer/test_workspace"
-
-                # Start container and run tests
-                docker start -a "$CONTAINER_ID"
-                EXIT_CODE=$?
-
-                # Clean up
-                docker rm "$CONTAINER_ID" > /dev/null
-
-                # Exit if tests failed
-                if [ $EXIT_CODE -ne 0 ]; then
-                  exit $EXIT_CODE
-                fi
+                  bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
               fi

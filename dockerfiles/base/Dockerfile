@@ -42,10 +42,11 @@ RUN useradd -m -s /bin/bash -u 1000 developer && \
     mkdir -p /home/developer/.local/bin && \
     chown -R developer:developer /home/developer
 
-# Create workspace directory
+# Create workspace directory with permissive permissions for any user
 RUN mkdir -p /workspace && \
-    chown -R developer:developer /workspace && \
-    chmod 755 /workspace
+    chmod 777 /workspace && \
+    mkdir -p /tmp/home && \
+    chmod 777 /tmp/home
 
 # Copy common scripts
 COPY --chown=developer:developer dockerfiles/base/scripts/run_test_wrapper.sh /usr/local/bin/run_test_wrapper.sh
