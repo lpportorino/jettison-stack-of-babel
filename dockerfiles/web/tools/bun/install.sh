@@ -11,10 +11,11 @@ apt-get install -y curl unzip
 
 # Install Bun
 export BUN_INSTALL="/opt/bun"
-curl -fsSL https://bun.sh/install | bash -s "bun-v1.1.42"
+curl -fsSL https://bun.sh/install | bash -s "bun-v1.1.45"
 
 # Create symlinks for system-wide access
 ln -sf $BUN_INSTALL/bin/bun /usr/local/bin/bun
+ln -sf $BUN_INSTALL/bin/bunx /usr/local/bin/bunx
 
 # Add to profile
 cat > /etc/profile.d/bun.sh << 'EOF'

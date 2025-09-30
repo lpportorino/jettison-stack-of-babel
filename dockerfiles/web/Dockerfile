@@ -67,6 +67,10 @@ RUN apt-get clean && \
 USER developer
 WORKDIR /workspace
 
+# Ensure PATH is set for developer user
+ENV PATH="/opt/bun/bin:/usr/local/lib/node_modules/.bin:${PATH}"
+ENV BUN_INSTALL="/opt/bun"
+
 # Verify installations
 RUN node --version && \
     npm --version && \

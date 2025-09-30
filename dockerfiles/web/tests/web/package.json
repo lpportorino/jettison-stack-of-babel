@@ -23,8 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lit": "^3.3.1",
-    "signal-polyfill": "^0.2.2",
-    "twind": "^0.16.19"
+    "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

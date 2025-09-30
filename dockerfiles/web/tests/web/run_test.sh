@@ -38,7 +38,7 @@ run_test() {
 }
 
 # 1. Test Bun installation and setup
-if ! command -v bun &> /dev/null; then
+if ! command -v bun &> /dev/null || ! bun --version &> /dev/null; then
     echo -e "${YELLOW}⚠ Bun not found, using npm fallback${NC}"
     # Fall back to npm/yarn for running the tests
     echo "Installing dependencies with npm..."
