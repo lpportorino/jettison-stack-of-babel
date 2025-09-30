@@ -14,8 +14,8 @@
     <description>Test project for Java in Jon-Babylon Docker image</description>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.1</junit.version>
     </properties>
@@ -36,8 +36,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>21</release>
-                    <enablePreview>true</enablePreview>
+                    <release>25</release>
+                    <enablePreview>false</enablePreview>
                 </configuration>
             </plugin>
             <plugin>

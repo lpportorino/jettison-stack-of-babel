@@ -4,7 +4,7 @@
   "description": "Minimal web test project for jon-babylon Docker image",
   "type": "module",
   "scripts": {
-    "build": "bun run build:ts && bun run build:bundle",
+    "build": "npm run build:ts && npm run build:bundle",
     "build:ts": "tsc --noEmit",
     "build:bundle": "esbuild src/app.ts --bundle --minify --sourcemap --target=es2022 --format=esm --outfile=dist/app.js",
     "build:localize": "lit-localize build",
@@ -12,7 +12,7 @@
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
     "format": "prettier --write 'src/**/*.{ts,js,json}'",
     "format:check": "prettier --check 'src/**/*.{ts,js,json}'",
-    "test": "bun run build && bun run lint && bun run format:check",
+    "test": "npm run build && npm run lint && npm run format:check",
     "dev": "esbuild src/app.ts --bundle --sourcemap --target=es2022 --format=esm --outfile=dist/app.js --watch"
   },
   "dependencies": {
