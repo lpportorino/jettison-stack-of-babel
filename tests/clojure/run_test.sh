@@ -45,11 +45,6 @@ echo ""
 echo "Testing cljfmt formatting..."
 clojure -M:format check || echo "Note: Format check may fail on first run"
 
-# Test Babashka
-echo ""
-echo "Testing Babashka..."
-bb --version
-echo '(println "Hello from Babashka!")' | bb
 
 # Test antq for dependency checking
 echo ""

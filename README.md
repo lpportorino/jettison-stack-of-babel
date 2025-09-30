@@ -39,7 +39,6 @@ Provides a consistent, reproducible development environment with all necessary c
 - **npm** - Node.js package manager (latest)
 - **yarn** - Fast, reliable JavaScript package manager
 - **pnpm** - Fast, disk space efficient package manager
-- **Babashka** - Fast-starting Clojure interpreter for scripting
 
 ### Code Quality Tools
 
@@ -336,7 +335,7 @@ jettison-stack-of-babel/
 ├── tools/                    # Modular installation scripts
 │   ├── java/install.sh       # Java via SDKMAN
 │   ├── kotlin/install.sh     # Kotlin + ktlint + detekt
-│   ├── clojure/install.sh    # Clojure + Leiningen + clj-kondo + Babashka
+│   ├── clojure/install.sh    # Clojure + Leiningen + clj-kondo
 │   ├── python/               # Python via pyenv + Nuitka compiler
 │   ├── rust/install.sh       # Rust + cargo tools
 │   ├── nodejs/install.sh     # Node.js installation

@@ -178,7 +178,7 @@ check_version_no_exit "Clang" "clang --version" "21"
 check_version_no_exit "Clang++" "clang++ --version" "21"
 check_version_no_exit "clang-format" "clang-format --version" "21"
 check_version_no_exit "clang-tidy" "clang-tidy --version" "21"
-check_version_no_exit "ktlint" "ktlint --version" "1" "optional"
+# ktlint removed - optional tool not installed
 check_version_no_exit "rustfmt" "rustfmt --version" "1"
 check_version_no_exit "clippy" "cargo clippy --version" "0.1"
 check_version_no_exit "Nuitka" "python3 -m nuitka --version" "2"
@@ -193,7 +193,7 @@ check_version_no_exit "npm" "npm --version" "10"
 check_version_no_exit "yarn" "yarn --version" "1"
 check_version_no_exit "pnpm" "pnpm --version" "9"
 check_version_no_exit "Bun" "bun --version" "1"
-check_version_no_exit "Babashka" "bb --version" "1" "optional"
+# Babashka removed - not part of standard setup
 echo ""
 
 echo -e "${YELLOW}JavaScript Tools:${NC}"

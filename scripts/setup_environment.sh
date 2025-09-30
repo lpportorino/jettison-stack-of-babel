@@ -98,6 +98,11 @@ if [ -d "/opt/pyenv/bin" ]; then
         ln -sf /opt/pyenv/versions/3.13.7/bin/pip3 /usr/local/bin/pip
         ln -sf /opt/pyenv/versions/3.13.7/bin/pip3 /usr/local/bin/pip3
     fi
+
+    # Create and fix permissions for pyenv shims directory
+    mkdir -p /opt/pyenv/shims
+    chmod 755 /opt/pyenv/shims
+    chown -R developer:developer /opt/pyenv/shims 2>/dev/null || true
 fi
 
 # Setup Bun
