@@ -134,8 +134,36 @@ jobs:
 
       - name: Test ${{ matrix.container }} image
         run: |
-          # Basic version check
-          docker run --rm ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} check_versions.sh || true
+          echo "=== Testing ${{ matrix.container }} container ==="
+
+          # Run version check
+          echo "Running version check..."
+          docker run --rm ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} check_versions.sh
+
+          # Run container-specific tests
+          echo "Running container tests..."
+          TEST_DIR="dockerfiles/${{ matrix.container }}/tests"
+
+          if [ -d "$TEST_DIR" ]; then
+            for test_subdir in "$TEST_DIR"/*; do
+              if [ -d "$test_subdir" ] && [ -f "$test_subdir/run_test.sh" ]; then
+                TEST_NAME=$(basename "$test_subdir")
+                echo "Running $TEST_NAME tests..."
+
+                docker run --rm \
+                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -w /workspace \
+                  ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} \
+                  bash -c "chmod +x run_test.sh && ./run_test.sh" || exit 1
+
+                echo "✓ $TEST_NAME tests passed"
+              fi
+            done
+          else
+            echo "No test directory found for ${{ matrix.container }}"
+          fi
+
+          echo "✓ All tests passed for ${{ matrix.container }}"
 
       - name: Push ${{ matrix.container }} image
         if: github.event_name != 'pull_request'
@@ -195,8 +223,36 @@ jobs:
 
       - name: Test Python image
         run: |
-          # Basic version check
-          docker run --rm ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} check_versions.sh || true
+          echo "=== Testing Python container ==="
+
+          # Run version check
+          echo "Running version check..."
+          docker run --rm ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} check_versions.sh
+
+          # Run Python-specific tests
+          echo "Running Python tests..."
+          TEST_DIR="dockerfiles/python/tests"
+
+          if [ -d "$TEST_DIR" ]; then
+            for test_subdir in "$TEST_DIR"/*; do
+              if [ -d "$test_subdir" ] && [ -f "$test_subdir/run_test.sh" ]; then
+                TEST_NAME=$(basename "$test_subdir")
+                echo "Running $TEST_NAME tests..."
+
+                docker run --rm \
+                  -v "$(pwd)/$test_subdir:/workspace" \
+                  -w /workspace \
+                  ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} \
+                  bash -c "chmod +x run_test.sh && ./run_test.sh" || exit 1
+
+                echo "✓ $TEST_NAME tests passed"
+              fi
+            done
+          else
+            echo "No test directory found for Python"
+          fi
+
+          echo "✓ All tests passed for Python"
 
       - name: Push Python image
         if: github.event_name != 'pull_request'
