@@ -17,7 +17,6 @@ apt-get install -y \
     libsqlite3-dev \
     wget \
     curl \
-    llvm \
     libncursesw5-dev \
     xz-utils \
     tk-dev \

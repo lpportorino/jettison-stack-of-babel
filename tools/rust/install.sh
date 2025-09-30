@@ -51,6 +51,9 @@ EOF
 # Source the environment for this session
 source /etc/profile.d/rust.sh
 
+# Set default toolchain (important for rustup symlinks to work)
+$CARGO_HOME/bin/rustup default stable
+
 # Install common Rust tools
 $CARGO_HOME/bin/cargo install cargo-watch cargo-edit cargo-outdated cargo-audit
 

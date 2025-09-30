@@ -43,7 +43,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git \
         unzip \
         xz-utils \
-        patchelf && \
+        patchelf \
+    stow && \
     locale-gen en_US.UTF-8 && \
     useradd -m -s /bin/bash -u 1000 developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -133,9 +134,11 @@ RUN chmod +x /tmp/tools/package-managers/install.sh \
        /tmp/tools/web-tools/install.sh \
        /tmp/tools/typescript/install.sh
 
-# Stage 12: Final setup
+# Stage 12: Final setup and environment configuration
 COPY scripts/check_versions.sh /scripts/check_versions.sh
-RUN chmod +x /scripts/check_versions.sh
+COPY scripts/setup_environment.sh /scripts/setup_environment.sh
+RUN chmod +x /scripts/check_versions.sh /scripts/setup_environment.sh && \
+    /scripts/setup_environment.sh
 
 # Create workspace directory
 RUN mkdir -p /workspace && \
@@ -148,8 +151,18 @@ RUN rm -rf /tmp/tools /tmp/scripts
 USER developer
 WORKDIR /workspace
 
-# Set final environment
-ENV PATH="/home/developer/.local/bin:${PATH}" \
+# Set final environment with proper PATH
+ENV PATH="/usr/local/bin:/opt/cargo/bin:/usr/local/go/bin:/opt/pyenv/bin:/opt/bun/bin:/opt/sdkman/candidates/java/current/bin:/opt/sdkman/candidates/kotlin/current/bin:/opt/sdkman/candidates/maven/current/bin:/opt/sdkman/candidates/gradle/current/bin:/opt/sdkman/candidates/leiningen/current/bin:/home/developer/.local/bin:/usr/bin:/bin" \
+    JAVA_HOME="/opt/sdkman/candidates/java/current" \
+    MAVEN_HOME="/opt/sdkman/candidates/maven/current" \
+    GRADLE_HOME="/opt/sdkman/candidates/gradle/current" \
+    CARGO_HOME="/opt/cargo" \
+    RUSTUP_HOME="/opt/rustup" \
+    PYENV_ROOT="/opt/pyenv" \
+    GOROOT="/usr/local/go" \
+    GOPATH="/home/developer/go" \
+    BUN_INSTALL="/opt/bun" \
+    SDKMAN_DIR="/opt/sdkman" \
     DOCKER_ARCH="arm64" \
     DOCKER_PLATFORM="linux/arm64"
 

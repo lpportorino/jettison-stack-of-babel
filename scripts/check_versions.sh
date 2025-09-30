@@ -194,6 +194,7 @@ echo ""
 echo -e "${YELLOW}Attempting to source environment files:${NC}"
 if [ -f "/opt/sdkman/bin/sdkman-init.sh" ]; then
     echo "  Sourcing SDKMAN..."
+    export SDKMAN_DIR="/opt/sdkman"
     source /opt/sdkman/bin/sdkman-init.sh
     echo -e "  ${GREEN}✓${NC} SDKMAN sourced"
 fi
