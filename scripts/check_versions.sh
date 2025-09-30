@@ -18,6 +18,23 @@ echo -e "${BLUE}  Jon-Babylon Tool Version Report${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
+# Print important environment variables
+echo -e "${YELLOW}Environment Variables:${NC}"
+echo -e "  PATH=${PATH}"
+echo -e "  JAVA_HOME=${JAVA_HOME:-<not set>}"
+echo -e "  MAVEN_HOME=${MAVEN_HOME:-<not set>}"
+echo -e "  GRADLE_HOME=${GRADLE_HOME:-<not set>}"
+echo -e "  CARGO_HOME=${CARGO_HOME:-<not set>}"
+echo -e "  RUSTUP_HOME=${RUSTUP_HOME:-<not set>}"
+echo -e "  GOROOT=${GOROOT:-<not set>}"
+echo -e "  GOPATH=${GOPATH:-<not set>}"
+echo -e "  PYENV_ROOT=${PYENV_ROOT:-<not set>}"
+echo -e "  BUN_INSTALL=${BUN_INSTALL:-<not set>}"
+echo -e "  SDKMAN_DIR=${SDKMAN_DIR:-<not set>}"
+echo -e "  CC=${CC:-<not set>}"
+echo -e "  CXX=${CXX:-<not set>}"
+echo ""
+
 # Function to find binary in system
 find_binary() {
     local binary="$1"

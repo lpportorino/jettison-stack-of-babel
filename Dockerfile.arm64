@@ -43,8 +43,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git \
         unzip \
         xz-utils \
-        patchelf \
-    stow && \
+        patchelf && \
     locale-gen en_US.UTF-8 && \
     useradd -m -s /bin/bash -u 1000 developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -139,6 +138,20 @@ COPY scripts/check_versions.sh /scripts/check_versions.sh
 COPY scripts/setup_environment.sh /scripts/setup_environment.sh
 RUN chmod +x /scripts/check_versions.sh /scripts/setup_environment.sh && \
     /scripts/setup_environment.sh
+
+# Set PATH for all subsequent commands
+ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/cargo/bin:/usr/local/go/bin:/opt/pyenv/bin:/opt/bun/bin:/usr/lib/llvm-21/bin"
+ENV JAVA_HOME="/opt/sdkman/candidates/java/current"
+ENV MAVEN_HOME="/opt/sdkman/candidates/maven/current"
+ENV GRADLE_HOME="/opt/sdkman/candidates/gradle/current"
+ENV CARGO_HOME="/opt/cargo"
+ENV RUSTUP_HOME="/opt/rustup"
+ENV GOROOT="/usr/local/go"
+ENV GOPATH="/home/developer/go"
+ENV PYENV_ROOT="/opt/pyenv"
+ENV BUN_INSTALL="/opt/bun"
+ENV CC="clang"
+ENV CXX="clang++"
 
 # Create workspace directory
 RUN mkdir -p /workspace && \
