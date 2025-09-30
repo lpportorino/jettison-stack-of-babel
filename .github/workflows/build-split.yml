@@ -243,3 +243,27 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-arm64
 
           docker manifest push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}
+
+  # Make all packages public
+  make-packages-public:
+    name: Make Packages Public
+    needs: create-manifests
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'pull_request'
+    permissions:
+      packages: write
+    steps:
+      - name: Make packages public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Making all jon-babylon packages public..."
+          for package in base jvm clang python rust go web; do
+            echo "Setting jon-babylon-$package to public..."
+            gh api \
+              --method PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/user/packages/container/jon-babylon-$package/visibility" \
+              -f visibility='public' || echo "Package jon-babylon-$package might already be public or doesn't exist yet"
+          done
