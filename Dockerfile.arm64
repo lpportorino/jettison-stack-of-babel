@@ -159,8 +159,14 @@ RUN mkdir -p /workspace && \
     chown -R developer:developer /workspace && \
     chmod 755 /workspace
 
-# Clean up temporary files
-RUN rm -rf /tmp/tools /tmp/scripts
+# Clean up temporary files and caches to reduce image size
+RUN rm -rf /tmp/tools /tmp/scripts && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/.cache && \
+    rm -rf /var/cache/apt/* && \
+    find /opt -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt -type d -name .git -exec rm -rf {} + 2>/dev/null || true
 
 # Ensure all tool directories are accessible by developer
 RUN chown -R developer:developer /opt/pyenv /opt/cargo /opt/rustup /opt/bun 2>/dev/null || true && \

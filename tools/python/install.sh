@@ -53,7 +53,18 @@ PYTHON_VERSIONS=(
 
 for version in "${PYTHON_VERSIONS[@]}"; do
     echo "Installing Python $version..."
+    # Use configure options to reduce size
+    CONFIGURE_OPTS="--enable-optimizations --with-lto --enable-loadable-sqlite-extensions" \
+    PYTHON_CONFIGURE_OPTS="--disable-test-modules" \
     pyenv install -s $version
+
+    # Remove test files and __pycache__ to save space
+    find $PYENV_ROOT/versions/$version -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+    find $PYENV_ROOT/versions/$version -type d -name test -exec rm -rf {} + 2>/dev/null || true
+    find $PYENV_ROOT/versions/$version -type d -name tests -exec rm -rf {} + 2>/dev/null || true
+    rm -rf $PYENV_ROOT/versions/$version/lib/python*/test
+    rm -rf $PYENV_ROOT/versions/$version/lib/python*/*/test
+    rm -rf $PYENV_ROOT/versions/$version/lib/python*/*/tests
 done
 
 # Set global Python version
