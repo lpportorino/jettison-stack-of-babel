@@ -1,6 +1,6 @@
 # Jettison Stack of Babel 🗼
 
-A collection of specialized polyglot Docker containers for the Jettison project. Named after the Tower of Babel, this project provides focused, optimized development environments for every major programming language and toolchain.
+A collection of specialized polyglot Docker containers for the Jettison project.
 
 ## 🎯 Architecture
 
