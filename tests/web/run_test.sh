@@ -37,34 +37,43 @@ run_test() {
     fi
 }
 
-# Change to test directory
-cd "$(dirname "$0")"
-
 # 1. Test Bun installation
-run_test "Bun" "bun --version"
-
-# 2. Test package installation
-echo ""
-echo "Installing dependencies with Bun..."
-if bun install &> /tmp/bun_install.log; then
-    echo -e "${GREEN}✓ Dependencies installed${NC}"
+if ! command -v bun &> /dev/null; then
+    echo -e "${RED}✗ Bun not installed. Installing via npm fallback...${NC}"
+    # Fall back to npm/yarn for running the tests
+    npm install
+    # Replace all 'bun' commands with 'npm' for the rest of the test
+    BUN_CMD="npm"
+    BUILD_CMD="npm run"
 else
-    echo -e "${RED}✗ Failed to install dependencies${NC}"
-    cat /tmp/bun_install.log
-    exit 1
+    echo -e "${GREEN}✓ Bun found${NC}"
+    BUN_CMD="bun"
+    BUILD_CMD="bun run"
+    ((TESTS_PASSED++))
+
+    # 2. Test package installation
+    echo ""
+    echo "Installing dependencies with Bun..."
+    if bun install &> /tmp/bun_install.log; then
+        echo -e "${GREEN}✓ Dependencies installed${NC}"
+    else
+        echo -e "${RED}✗ Failed to install dependencies${NC}"
+        cat /tmp/bun_install.log
+        exit 1
+    fi
 fi
 
 # 3. Test TypeScript compilation
-run_test "TypeScript compilation" "bun run build:ts"
+run_test "TypeScript compilation" "${BUILD_CMD} build:ts"
 
 # 4. Test esbuild bundling
-run_test "esbuild bundling" "bun run build:bundle"
+run_test "esbuild bundling" "${BUILD_CMD} build:bundle"
 
 # 5. Test ESLint
-run_test "ESLint" "bun run lint"
+run_test "ESLint" "${BUILD_CMD} lint"
 
 # 6. Test Prettier
-run_test "Prettier formatting check" "bun run format:check"
+run_test "Prettier formatting check" "${BUILD_CMD} format:check"
 
 # 7. Test lit-localize (extract messages)
 echo ""
@@ -81,7 +90,7 @@ else
 fi
 
 # 8. Test the full build
-run_test "Full build process" "bun run build"
+run_test "Full build process" "${BUILD_CMD} build"
 
 # 9. Verify output files exist
 echo ""

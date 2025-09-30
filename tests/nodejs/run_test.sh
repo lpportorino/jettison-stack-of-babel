@@ -47,7 +47,12 @@ yarn install --frozen-lockfile
 yarn start
 
 echo "Testing pnpm..."
-pnpm install --frozen-lockfile
+# First run without frozen-lockfile to create lockfile if missing
+if [ ! -f "pnpm-lock.yaml" ]; then
+    pnpm install
+else
+    pnpm install --frozen-lockfile
+fi
 pnpm start
 
 echo "✓ Node.js/TypeScript tests completed!"

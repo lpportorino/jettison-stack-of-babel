@@ -109,18 +109,11 @@ build-amd64: check-buildx
 		.
 
 # Build for both architectures
-build-multi: check-buildx
-	@echo "$(BLUE)Building multi-architecture images...$(NC)"
-	@echo "$(GREEN)ARM64$(NC)"
-	@echo "$(YELLOW)AMD64$(NC)"
-	$(DOCKER_BUILDX) \
-		--platform linux/arm64,linux/amd64 \
-		-f docker/Dockerfile \
-		-t $(REGISTRY)/$(IMAGE_NAME):latest \
-		-t $(REGISTRY)/$(IMAGE_NAME):$(VERSION) \
-		-t $(REGISTRY)/$(IMAGE_NAME):$(GIT_SHA) \
-		--push \
-		.
+build-multi: build-arm64 build-amd64
+	@echo "$(BLUE)Building multi-architecture images completed$(NC)"
+	@echo "$(GREEN)ARM64 built$(NC)"
+	@echo "$(YELLOW)AMD64 built$(NC)"
+	@echo "Use 'make push' to push images to registry"
 
 # Check if buildx is available
 check-buildx:
@@ -133,7 +126,7 @@ check-buildx:
 test: build
 	@echo "$(BLUE)Running comprehensive test suite...$(NC)"
 	@echo "Testing on $(PLATFORM)"
-	@./run_all_tests.sh
+	@./scripts/test.sh
 	@echo "$(GREEN)All tests passed!$(NC)"
 
 # Test ARM64 specific optimizations

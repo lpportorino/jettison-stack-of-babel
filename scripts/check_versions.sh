@@ -22,6 +22,7 @@ check_version() {
     local tool_name="$1"
     local version_cmd="$2"
     local min_version="$3"
+    local optional="$4"  # Optional flag
 
     echo -n "Checking $tool_name... "
 
@@ -31,7 +32,12 @@ check_version() {
         return 0
     else
         echo -e "${RED}✗${NC} Not found"
-        return 1
+        if [ "$optional" != "optional" ]; then
+            return 1
+        else
+            echo "  (Optional tool - skipping)"
+            return 0
+        fi
     fi
 }
 
@@ -54,6 +60,9 @@ check_version "Clang++" "clang++ --version" "21" || ((FAILURES++))
 check_version "clang-format" "clang-format --version" "21" || ((FAILURES++))
 check_version "clang-tidy" "clang-tidy --version" "21" || ((FAILURES++))
 check_version "clj-kondo" "clj-kondo --version" "" || ((FAILURES++))
+check_version "ktlint" "ktlint --version" "1" || ((FAILURES++))
+check_version "rustfmt" "rustfmt --version" "1" || ((FAILURES++))
+check_version "clippy" "cargo clippy --version" "0.1" || ((FAILURES++))
 check_version "Nuitka" "python3 -m nuitka --version" "2" || ((FAILURES++))
 echo ""
 
@@ -66,6 +75,7 @@ check_version "npm" "npm --version" "10" || ((FAILURES++))
 check_version "yarn" "yarn --version" "1" || ((FAILURES++))
 check_version "pnpm" "pnpm --version" "9" || ((FAILURES++))
 check_version "Bun" "bun --version" "1" || ((FAILURES++))
+check_version "Babashka" "bb --version" "1" || ((FAILURES++))
 echo ""
 
 echo -e "${YELLOW}JavaScript Tools:${NC}"
@@ -108,6 +118,14 @@ if [ "$1" = "--json" ]; then
     generate_json_report > /tmp/version_report.json
     echo ""
     echo -e "${BLUE}JSON report saved to /tmp/version_report.json${NC}"
+fi
+
+# Check if we should fail fast on missing tools
+if [ "$1" = "--fail-fast" ] || [ "$FAIL_FAST" = "true" ]; then
+    if [ $FAILURES -gt 0 ]; then
+        echo -e "${RED}✗ Aborting: $FAILURES required tool(s) not found${NC}"
+        exit 1
+    fi
 fi
 
 # Summary

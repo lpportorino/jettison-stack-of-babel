@@ -1,246 +1,164 @@
-# jon-babylon - Universal Polyglot Development Image (x86_64)
-# Base: Ubuntu 22.04 LTS (matching Jettison host OS)
-FROM ubuntu:22.04
+# Jon-Babylon Docker Image - x86_64/AMD64
+# Target: Ubuntu 22.04 AMD64
+# Build with: make build-amd64
 
-# Metadata
-LABEL maintainer="Jettison Team"
-LABEL description="Jon-Babylon: Polyglot development environment for Jettison"
-LABEL version="2025.01"
-LABEL architecture="x86_64"
+FROM ubuntu:22.04 AS base
 
-# Prevent interactive prompts during installation
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
+# Build arguments for optimization
+ARG OPTFLAGS="-O3"
 
-# Set up working directory
+# Set architecture-specific environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    OPTFLAGS="${OPTFLAGS}" \
+    CFLAGS="${OPTFLAGS}" \
+    CXXFLAGS="${OPTFLAGS}" \
+    LDFLAGS="-Wl,-O3" \
+    RUSTFLAGS="-C opt-level=3" \
+    MAKEFLAGS="-j$(nproc)"
+
+# Note about optimization
+RUN echo "Building x86_64/AMD64 image" && \
+    echo "Architecture: $(uname -m)" && \
+    echo "Optimizations: ${OPTFLAGS}"
+
+# Copy all installation scripts and tools
+COPY tools/ /tmp/tools/
+COPY scripts/ /tmp/scripts/
+
+# Stage 00: Base setup
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        software-properties-common \
+        wget \
+        sudo \
+        locales \
+        git \
+        unzip \
+        xz-utils \
+        patchelf && \
+    locale-gen en_US.UTF-8 && \
+    useradd -m -s /bin/bash -u 1000 developer && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Stage 01: Build essentials
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        ninja-build \
+        pkg-config \
+        autoconf \
+        automake \
+        libtool \
+        libssl-dev \
+        libffi-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        zlib1g-dev \
+        liblzma-dev \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Stage 02-04: JVM Languages (Java, Kotlin, Clojure)
+RUN chmod +x /tmp/tools/java/install.sh && \
+    /tmp/tools/java/install.sh && \
+    rm /tmp/tools/java/install.sh
+
+RUN chmod +x /tmp/tools/kotlin/install.sh && \
+    /tmp/tools/kotlin/install.sh && \
+    rm /tmp/tools/kotlin/install.sh
+
+RUN chmod +x /tmp/tools/clojure/install.sh && \
+    /tmp/tools/clojure/install.sh && \
+    rm /tmp/tools/clojure/install.sh
+
+# Stage 05: Python with optimizations
+RUN chmod +x /tmp/tools/python/install.sh /tmp/tools/python/nuitka.sh && \
+    export PYTHON_CFLAGS="${OPTFLAGS}" && \
+    export PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" && \
+    /tmp/tools/python/install.sh && \
+    /tmp/tools/python/nuitka.sh && \
+    rm /tmp/tools/python/*.sh
+
+# Stage 06: Clang/LLVM
+RUN chmod +x /tmp/tools/clang/install.sh && \
+    LLVM_TARGETS="X86;AArch64" /tmp/tools/clang/install.sh && \
+    rm /tmp/tools/clang/install.sh
+
+# Stage 07: Rust
+RUN chmod +x /tmp/tools/rust/install.sh && \
+    RUSTFLAGS="-C opt-level=3" /tmp/tools/rust/install.sh && \
+    rm /tmp/tools/rust/install.sh
+
+# Stage 08: Node.js
+RUN chmod +x /tmp/tools/nodejs/install.sh && \
+    /tmp/tools/nodejs/install.sh && \
+    rm /tmp/tools/nodejs/install.sh
+
+# Stage 09: Build tools (Maven, Gradle)
+RUN chmod +x /tmp/tools/build-tools/maven.sh \
+              /tmp/tools/build-tools/gradle.sh && \
+    /tmp/tools/build-tools/maven.sh && \
+    /tmp/tools/build-tools/gradle.sh && \
+    rm /tmp/tools/build-tools/*.sh
+
+# Stage 10: Web tools and package managers
+RUN chmod +x /tmp/tools/package-managers/install.sh \
+              /tmp/tools/web-tools/install.sh \
+              /tmp/tools/typescript/install.sh && \
+    /tmp/tools/package-managers/install.sh && \
+    /tmp/tools/web-tools/install.sh && \
+    /tmp/tools/typescript/install.sh && \
+    rm /tmp/tools/package-managers/install.sh \
+       /tmp/tools/web-tools/install.sh \
+       /tmp/tools/typescript/install.sh
+
+# Stage 11: Final setup
+COPY scripts/check_versions.sh /scripts/check_versions.sh
+RUN chmod +x /scripts/check_versions.sh
+
+# Create workspace directory
+RUN mkdir -p /workspace && \
+    chown -R developer:developer /workspace
+
+# Clean up temporary files
+RUN rm -rf /tmp/tools /tmp/scripts
+
+# Switch to non-root user
+USER developer
 WORKDIR /workspace
 
-# ============================================================================
-# System Updates and Base Dependencies
-# ============================================================================
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y \
-        # Essential tools
-        curl wget git vim nano \
-        # Build essentials
-        build-essential make cmake pkg-config \
-        # Development libraries
-        libssl-dev libffi-dev libbz2-dev libreadline-dev libsqlite3-dev \
-        libncurses5-dev libncursesw5-dev xz-utils tk-dev libxml2-dev \
-        libxmlsec1-dev liblzma-dev \
-        # System tools
-        ca-certificates gnupg lsb-release software-properties-common \
-        sudo locales tzdata \
-        # Compression tools
-        zip unzip p7zip-full \
-        # Network tools
-        net-tools iputils-ping \
-        # Build tools for Nuitka
-        patchelf \
-    && rm -rf /var/lib/apt/lists/*
+# Set final environment
+ENV PATH="/home/developer/.local/bin:${PATH}" \
+    DOCKER_ARCH="amd64" \
+    DOCKER_PLATFORM="linux/amd64"
 
-# Configure locale
-RUN locale-gen en_US.UTF-8
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python3 --version && node --version && rustc --version || exit 1
 
-# ============================================================================
-# Add APT Repositories
-# ============================================================================
-
-# LLVM/Clang 21 Repository
-RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | \
-    gpg --dearmor > /usr/share/keyrings/llvm-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" > /etc/apt/sources.list.d/llvm.list
-
-# NodeSource Repository for Node.js 22 LTS
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-
-# Update package lists with new repositories
-RUN apt-get update
-
-# ============================================================================
-# Install OpenJDK 21 LTS
-# ============================================================================
-RUN apt-get install -y openjdk-21-jdk && \
-    update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java && \
-    update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
-
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-ENV PATH=$JAVA_HOME/bin:$PATH
-
-# ============================================================================
-# Install LLVM/Clang 21
-# ============================================================================
-RUN apt-get install -y \
-    clang-21 \
-    clang-tools-21 \
-    clang-format-21 \
-    clang-tidy-21 \
-    clangd-21 \
-    lldb-21 \
-    lld-21 \
-    llvm-21-dev \
-    llvm-21-tools \
-    llvm-21-runtime \
-    libclang-21-dev \
-    libclang-common-21-dev \
-    libclang-cpp21-dev \
-    libclang1-21 \
-    libc++-21-dev \
-    libc++abi-21-dev \
-    libclang-rt-21-dev \
-    libomp-21-dev && \
-    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100 && \
-    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100 && \
-    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-21 100 && \
-    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-21 100
-
-# ============================================================================
-# Install Node.js 22 LTS
-# ============================================================================
-RUN apt-get install -y nodejs && \
-    npm install -g npm@latest
-
-# ============================================================================
-# Install SDKMAN for managing JVM tools (Maven, Gradle, Kotlin, etc.)
-# ============================================================================
-RUN curl -s "https://get.sdkman.io" | bash
-
-# Source SDKMAN and install latest stable versions of tools
-RUN bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && \
-    sdk install maven && \
-    sdk install gradle && \
-    sdk install kotlin && \
-    sdk flush archives"
-
-# Set environment variables for SDKMAN tools
-ENV SDKMAN_DIR=/root/.sdkman
-ENV PATH=$SDKMAN_DIR/candidates/maven/current/bin:$PATH
-ENV PATH=$SDKMAN_DIR/candidates/gradle/current/bin:$PATH
-ENV PATH=$SDKMAN_DIR/candidates/kotlin/current/bin:$PATH
-
-# ============================================================================
-# Install Clojure and Leiningen
-# ============================================================================
-# Clojure CLI tools - Get latest version
-RUN curl -O https://download.clojure.org/install/linux-install.sh && \
-    chmod +x linux-install.sh && \
-    ./linux-install.sh && \
-    rm linux-install.sh
-
-# Leiningen
-RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /usr/local/bin/lein && \
-    chmod +x /usr/local/bin/lein && \
-    lein version
-
-# clj-kondo installed via Clojure install script
-
-# ============================================================================
-# Install Python via pyenv
-# ============================================================================
-# Install pyenv
-RUN git clone https://github.com/pyenv/pyenv.git /opt/pyenv
-
-ENV PYENV_ROOT=/opt/pyenv
-ENV PATH=$PYENV_ROOT/bin:$PATH
-
-# Configure pyenv
-RUN echo 'eval "$(pyenv init -)"' >> /etc/profile.d/pyenv.sh
-
-# Install latest stable Python versions
-RUN PYTHON_LATEST=$(pyenv install --list | grep -E '^\s*3\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ') && \
-    PYTHON_PREV=$(pyenv install --list | grep -E '^\s*3\.[0-9]+\.[0-9]+$' | tail -2 | head -1 | tr -d ' ') && \
-    echo "Installing Python ${PYTHON_PREV} and ${PYTHON_LATEST}" && \
-    pyenv install ${PYTHON_PREV} && \
-    pyenv install ${PYTHON_LATEST} && \
-    pyenv global ${PYTHON_LATEST}
-
-# Make Python available system-wide
-RUN PYTHON_VERSION=$(pyenv version-name) && \
-    ln -sf $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python3 /usr/local/bin/python3 && \
-    ln -sf $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip3 /usr/local/bin/pip3
-
-# ============================================================================
-# Install Nuitka (Python Compiler)
-# ============================================================================
-RUN pip3 install --upgrade pip setuptools wheel && \
-    pip3 install nuitka ordered-set patchelf
-
-# ============================================================================
-# Install Rust
-# ============================================================================
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-
-ENV CARGO_HOME=/root/.cargo
-ENV RUSTUP_HOME=/root/.rustup
-ENV PATH=$CARGO_HOME/bin:$PATH
-
-# Install common Rust tools
-RUN cargo install cargo-watch cargo-edit cargo-outdated
-
-# ============================================================================
-# Install Bun
-# ============================================================================
-RUN curl -fsSL https://bun.sh/install | bash
-
-ENV BUN_INSTALL=/root/.bun
-ENV PATH=$BUN_INSTALL/bin:$PATH
-
-# ============================================================================
-# Install JavaScript/TypeScript Global Packages
-# ============================================================================
-RUN npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm install -g \
-    typescript@latest \
-    esbuild@latest \
-    prettier@latest \
-    eslint@latest \
-    @lit/localize@latest \
-    @lit/localize-tools@latest \
-    yarn@latest \
-    pnpm@latest \
-    turbo@latest \
-    nx@latest || \
-    (echo "Retrying npm install..." && npm install -g \
-    typescript esbuild prettier eslint \
-    @lit/localize @lit/localize-tools \
-    yarn pnpm turbo nx)
-
-# ============================================================================
-# Create Scripts Directory
-# ============================================================================
-RUN mkdir -p /scripts
-
-# Version check script
-COPY scripts/check_versions.sh /scripts/
-RUN chmod +x /scripts/check_versions.sh || true
-
-# ============================================================================
-# Clean up
-# ============================================================================
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# ============================================================================
-# Environment Summary
-# ============================================================================
-RUN echo "jon-babylon build complete!" && \
-    echo "Available tools:" && \
-    echo "  - OpenJDK $(java -version 2>&1 | head -n1)" && \
-    echo "  - Clang $(clang --version | head -n1)" && \
-    echo "  - Node.js $(node --version)" && \
-    echo "  - Python $(python3 --version)" && \
-    echo "  - Rust $(rustc --version)" && \
-    echo "  - Kotlin $(kotlin -version 2>&1 | head -n1 || echo 'installed')" && \
-    echo "  - Clojure $(clojure --version || echo 'installed')" && \
-    echo "  - Maven $(mvn --version | head -n1)" && \
-    echo "  - Gradle $(gradle --version | grep Gradle)" && \
-    echo "  - Bun $(bun --version)" && \
-    echo "  - TypeScript $(tsc --version)"
+# Labels
+LABEL maintainer="Jettison Team" \
+      version="amd64" \
+      description="Jon-Babylon polyglot development image for AMD64" \
+      target.platform="linux/amd64" \
+      optimization.flags="${OPTFLAGS}"
 
 # Default command
 CMD ["/bin/bash"]

@@ -16,9 +16,9 @@ Provides a consistent, reproducible development environment with all necessary c
 ## 🛠️ Detailed Tool Inventory
 
 ### Programming Languages
-- **Java** - OpenJDK 21 LTS (via SDKMAN)
-- **Kotlin** - Latest stable via SDKMAN
-- **Clojure** - Latest stable with Leiningen
+- **Java** - OpenJDK 21 LTS
+- **Kotlin** - 2.2.10 via SDKMAN
+- **Clojure** - 1.12.0 with CLI tools
 - **Python** - Latest stable versions via pyenv
 - **Rust** - Latest stable via rustup
 - **JavaScript/TypeScript** - Node.js 22 LTS
@@ -35,14 +35,18 @@ Provides a consistent, reproducible development environment with all necessary c
 - **Gradle** - Modern build automation (via SDKMAN)
 - **Leiningen** - Clojure project automation
 - **Cargo** - Rust package manager and build tool
-- **npm/yarn/pnpm** - JavaScript package managers
+- **npm** - Node.js package manager (latest)
+- **yarn** - Fast, reliable JavaScript package manager
+- **pnpm** - Fast, disk space efficient package manager
+- **Babashka** - Fast-starting Clojure interpreter for scripting
 
 ### Code Quality Tools
 
 #### Linters
 - **ESLint** - JavaScript/TypeScript linting
-- **ktlint** - Kotlin code style checker
-- **detekt** - Kotlin static analyzer
+- **ktlint** - Kotlin code style checker (v1.5.0)
+- **detekt** - Kotlin static analyzer (v1.23.7)
+- **clj-kondo** - Clojure/ClojureScript linter
 - **flake8** - Python style guide enforcement
 - **ruff** - Fast Python linter
 - **mypy** - Python static type checker
@@ -54,6 +58,7 @@ Provides a consistent, reproducible development environment with all necessary c
 - **black** - Python code formatter
 - **rustfmt** - Rust code formatter
 - **clang-format** - C/C++ code formatter
+- **cljfmt** - Clojure code formatter
 
 ### Web Development
 - **@lit/localize** - Internationalization for Lit
@@ -66,7 +71,7 @@ Provides a consistent, reproducible development environment with all necessary c
 ### Build Locally (Recommended)
 ```bash
 # Auto-detect architecture and build optimized image
-./build-local.sh
+./scripts/build.sh
 ```
 
 ### Pull from Registry (When Available)
@@ -168,21 +173,21 @@ Both architectures are built in parallel using a unified GitHub Actions workflow
 #### Build Script
 ```bash
 # Build for current architecture
-./build-local.sh
+./scripts/build.sh
 
 # Build without cache
-./build-local.sh --no-cache
+./scripts/build.sh --no-cache
 
 # Run all tests
-./run_all_tests.sh
+./scripts/test.sh
 ```
 
-The build scripts automatically:
+The build script (`scripts/build.sh`) automatically:
 - Detects your architecture (ARM64 or AMD64)
 - Selects the appropriate Dockerfile
 - Applies optimization flags
 - Uses Docker Buildx if available
-- Runs basic validation tests
+- Creates detailed logs in `build-logs/` directory
 - Shows build summary and usage instructions
 
 ### Using Makefile
@@ -307,7 +312,7 @@ Each Docker build stage is tested independently:
 Each tool is tested with a real project:
 ```bash
 # Run all tests
-./run_all_tests.sh
+./scripts/test.sh
 
 # Test specific language
 ./tests/java/run_test.sh
@@ -327,28 +332,37 @@ Each tool is tested with a real project:
 ### Project Structure
 ```
 jettison-stack-of-babel/
-├── docker/
-│   ├── stages/          # Modular Docker stages (00-11)
-│   ├── Dockerfile       # Main assembly file
-│   └── tests/           # Stage testing scripts
-├── tools/               # Installation scripts per tool
-│   ├── java/
-│   ├── python/
-│   ├── rust/
-│   └── ...
-├── tests/               # Test projects with linters/formatters
-│   ├── java/            # Maven + Gradle configs
-│   ├── python/          # pip + mypy + black configs
-│   ├── rust/            # Cargo + clippy + rustfmt
-│   ├── web/             # TypeScript + ESLint + Prettier
-│   └── ...
+├── tools/                    # Modular installation scripts
+│   ├── java/install.sh       # Java via SDKMAN
+│   ├── kotlin/install.sh     # Kotlin + ktlint + detekt
+│   ├── clojure/install.sh    # Clojure + Leiningen + clj-kondo + Babashka
+│   ├── python/               # Python via pyenv + Nuitka compiler
+│   ├── rust/install.sh       # Rust + cargo tools
+│   ├── nodejs/install.sh     # Node.js installation
+│   ├── clang/install.sh      # LLVM/Clang toolchain
+│   ├── build-tools/          # Maven and Gradle scripts
+│   ├── package-managers/     # yarn, pnpm via Corepack
+│   ├── web-tools/            # esbuild, Prettier, ESLint, Bun
+│   └── typescript/           # TypeScript global install
+├── tests/                    # Test projects for each language
+│   ├── java/                 # Maven + Gradle tests
+│   ├── kotlin/               # Kotlin + ktlint tests
+│   ├── clojure/              # Clojure + clj-kondo tests
+│   ├── python/               # Python + tools tests
+│   ├── rust/                 # Rust + cargo tests
+│   ├── c/                    # C tests with Clang
+│   ├── cpp/                  # C++ tests with Clang
+│   ├── nodejs/               # Node.js + package managers
+│   └── web/                  # Web stack tests
 ├── scripts/
-│   ├── build.sh         # Build script
-│   └── check_versions.sh
+│   ├── build.sh              # Main build script with logging
+│   ├── test.sh               # Comprehensive test runner
+│   └── check_versions.sh     # Tool version verification
 ├── .github/workflows/
-│   └── build.yml        # Unified multi-arch build with matrix strategy
-├── Dockerfile.arm64     # ARM64 specific build
-└── Dockerfile.x86_64    # x86_64 specific build
+│   └── build.yml             # CI/CD with matrix strategy
+├── Dockerfile.arm64          # ARM64 build (uses install scripts)
+├── Dockerfile.x86_64         # x86_64 build (uses install scripts)
+└── Makefile                  # Build automation
 ```
 
 ### Adding New Tools

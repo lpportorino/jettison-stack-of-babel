@@ -2,11 +2,9 @@
 # Target: Ubuntu 22.04 ARM64
 # Build with: make build-arm64
 
-# Use the staged build system
 FROM ubuntu:22.04 AS base
 
 # Build arguments for optimization
-# Note: Generic ARM64 for CI builds, specific optimizations only for production
 ARG OPTFLAGS="-O3"
 
 # Set architecture-specific environment variables
@@ -18,15 +16,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CXXFLAGS="${OPTFLAGS}" \
     LDFLAGS="-Wl,-O3" \
     RUSTFLAGS="-C opt-level=3" \
-    MAKEFLAGS="-j8"
+    MAKEFLAGS="-j$(nproc)"
 
 # Note about optimization
 RUN echo "Building ARM64 image" && \
     echo "Architecture: $(uname -m)" && \
     echo "Optimizations: ${OPTFLAGS}"
 
-# Copy all stage dockerfiles and build scripts
-COPY docker/stages/ /tmp/stages/
+# Copy all installation scripts and tools
 COPY tools/ /tmp/tools/
 COPY scripts/ /tmp/scripts/
 
@@ -81,63 +78,60 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     rm -rf /var/lib/apt/lists/*
 
 # Stage 02-04: JVM Languages (Java, Kotlin, Clojure)
-COPY tools/java/install/install.sh /tmp/install-java.sh
-RUN chmod +x /tmp/install-java.sh && /tmp/install-java.sh && rm /tmp/install-java.sh
+RUN chmod +x /tmp/tools/java/install.sh && \
+    /tmp/tools/java/install.sh && \
+    rm /tmp/tools/java/install.sh
 
-COPY tools/kotlin/install/install.sh /tmp/install-kotlin.sh
-RUN chmod +x /tmp/install-kotlin.sh && /tmp/install-kotlin.sh && rm /tmp/install-kotlin.sh
+RUN chmod +x /tmp/tools/kotlin/install.sh && \
+    /tmp/tools/kotlin/install.sh && \
+    rm /tmp/tools/kotlin/install.sh
 
-COPY tools/clojure/install/install.sh /tmp/install-clojure.sh
-RUN chmod +x /tmp/install-clojure.sh && /tmp/install-clojure.sh && rm /tmp/install-clojure.sh
+RUN chmod +x /tmp/tools/clojure/install.sh && \
+    /tmp/tools/clojure/install.sh && \
+    rm /tmp/tools/clojure/install.sh
 
 # Stage 05: Python with ARM64 optimizations
-COPY tools/python/install/install.sh /tmp/install-python.sh
-COPY tools/python/install/nuitka.sh /tmp/install-nuitka.sh
-RUN chmod +x /tmp/install-python.sh /tmp/install-nuitka.sh && \
-    # Set Python build flags for ARM64
+RUN chmod +x /tmp/tools/python/install.sh /tmp/tools/python/nuitka.sh && \
     export PYTHON_CFLAGS="${OPTFLAGS}" && \
     export PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" && \
-    /tmp/install-python.sh && \
-    /tmp/install-nuitka.sh && \
-    rm /tmp/install-python.sh /tmp/install-nuitka.sh
+    /tmp/tools/python/install.sh && \
+    /tmp/tools/python/nuitka.sh && \
+    rm /tmp/tools/python/*.sh
 
 # Stage 06: Clang/LLVM with ARM64 target
-COPY tools/clang/install/install.sh /tmp/install-clang.sh
-RUN chmod +x /tmp/install-clang.sh && \
-    # Install LLVM with ARM64 as default target
-    LLVM_TARGETS="AArch64;X86" /tmp/install-clang.sh && \
-    rm /tmp/install-clang.sh
+RUN chmod +x /tmp/tools/clang/install.sh && \
+    LLVM_TARGETS="AArch64;X86" /tmp/tools/clang/install.sh && \
+    rm /tmp/tools/clang/install.sh
 
 # Stage 07: Rust with ARM64 optimizations
-COPY tools/rust/install/install.sh /tmp/install-rust.sh
-RUN chmod +x /tmp/install-rust.sh && \
-    # Install Rust for ARM64
+RUN chmod +x /tmp/tools/rust/install.sh && \
     RUST_TARGET="aarch64-unknown-linux-gnu" \
     RUSTFLAGS="-C opt-level=3" \
-    /tmp/install-rust.sh && \
-    rm /tmp/install-rust.sh
+    /tmp/tools/rust/install.sh && \
+    rm /tmp/tools/rust/install.sh
 
 # Stage 08: Node.js
-COPY tools/nodejs/install/install.sh /tmp/install-nodejs.sh
-RUN chmod +x /tmp/install-nodejs.sh && /tmp/install-nodejs.sh && rm /tmp/install-nodejs.sh
+RUN chmod +x /tmp/tools/nodejs/install.sh && \
+    /tmp/tools/nodejs/install.sh && \
+    rm /tmp/tools/nodejs/install.sh
 
 # Stage 09: Build tools (Maven, Gradle)
-COPY tools/build-tools/maven/install/install.sh /tmp/install-maven.sh
-COPY tools/build-tools/gradle/install/install.sh /tmp/install-gradle.sh
-RUN chmod +x /tmp/install-maven.sh /tmp/install-gradle.sh && \
-    /tmp/install-maven.sh && \
-    /tmp/install-gradle.sh && \
-    rm /tmp/install-maven.sh /tmp/install-gradle.sh
+RUN chmod +x /tmp/tools/build-tools/maven.sh \
+              /tmp/tools/build-tools/gradle.sh && \
+    /tmp/tools/build-tools/maven.sh && \
+    /tmp/tools/build-tools/gradle.sh && \
+    rm /tmp/tools/build-tools/*.sh
 
 # Stage 10: Web tools and package managers
-COPY tools/package-managers/install/install.sh /tmp/install-package-managers.sh
-COPY tools/web-tools/install/install.sh /tmp/install-web-tools.sh
-COPY tools/typescript/install/install.sh /tmp/install-typescript.sh
-RUN chmod +x /tmp/install-package-managers.sh /tmp/install-web-tools.sh /tmp/install-typescript.sh && \
-    /tmp/install-package-managers.sh && \
-    /tmp/install-web-tools.sh && \
-    /tmp/install-typescript.sh && \
-    rm /tmp/install-*.sh
+RUN chmod +x /tmp/tools/package-managers/install.sh \
+              /tmp/tools/web-tools/install.sh \
+              /tmp/tools/typescript/install.sh && \
+    /tmp/tools/package-managers/install.sh && \
+    /tmp/tools/web-tools/install.sh && \
+    /tmp/tools/typescript/install.sh && \
+    rm /tmp/tools/package-managers/install.sh \
+       /tmp/tools/web-tools/install.sh \
+       /tmp/tools/typescript/install.sh
 
 # Stage 11: Final setup
 COPY scripts/check_versions.sh /scripts/check_versions.sh
@@ -146,6 +140,9 @@ RUN chmod +x /scripts/check_versions.sh
 # Create workspace directory
 RUN mkdir -p /workspace && \
     chown -R developer:developer /workspace
+
+# Clean up temporary files
+RUN rm -rf /tmp/tools /tmp/scripts
 
 # Switch to non-root user
 USER developer

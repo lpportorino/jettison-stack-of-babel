@@ -90,11 +90,12 @@ jobs:
           build-args: ${{ matrix.build-args }}
 
       # Run tests sequentially for better log readability
-      - name: Test - Version Check
+      - name: Test - Version Check (Required)
         run: |
           echo "=== Testing ${{ matrix.description }} ==="
           echo "Checking installed tool versions..."
-          docker run --rm jon-babylon:${{ matrix.arch }}-test /scripts/check_versions.sh
+          echo "This will fail fast if any required tool is missing..."
+          docker run --rm -e FAIL_FAST=true jon-babylon:${{ matrix.arch }}-test /scripts/check_versions.sh --fail-fast
 
       - name: Test - Java (Maven, Gradle)
         run: |

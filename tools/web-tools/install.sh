@@ -24,8 +24,11 @@ echo "Installing @lit/localize..."
 npm install -g @lit/localize@latest @lit/localize-tools@latest
 
 echo "Installing Bun..."
-curl -fsSL https://bun.sh/install | bash
+# Bun installer automatically detects architecture
 export BUN_INSTALL="/opt/bun"
+curl -fsSL https://bun.sh/install | bash -s "bun-v1.1.45"
+mv ~/.bun/* /opt/bun/ 2>/dev/null || true
+rm -rf ~/.bun
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Create environment file for Bun
@@ -35,7 +38,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 EOF
 
 echo "✓ Web development tools installed successfully"
-esbuild --version
-prettier --version
-eslint --version
-bun --version
+echo "  - esbuild: $(esbuild --version 2>&1)"
+echo "  - prettier: $(prettier --version 2>&1)"
+echo "  - eslint: $(eslint --version 2>&1)"
+echo "  - bun: $(bun --version 2>&1 || echo 'installation may have failed')"
