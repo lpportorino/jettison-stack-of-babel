@@ -67,7 +67,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-base:latest-${{ matrix.arch }}
             ${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=base-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=base-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=base-${{ matrix.arch }},ignore-error=true
 
   # Build all other containers in parallel
   build-containers:
@@ -115,7 +115,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest-${{ matrix.arch }}
             ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.container }}-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.container }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.container }}-${{ matrix.arch }},ignore-error=true
           build-args: |
             BASE_IMAGE=${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}-${{ matrix.arch }}
 
@@ -163,7 +163,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-python:latest-${{ matrix.arch }}
             ${{ env.IMAGE_PREFIX }}-python:${{ github.sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=python-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=python-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=python-${{ matrix.arch }},ignore-error=true
           build-args: |
             CLANG_IMAGE=${{ env.IMAGE_PREFIX }}-clang:${{ github.sha }}-${{ matrix.arch }}
 
