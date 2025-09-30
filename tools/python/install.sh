@@ -48,7 +48,7 @@ EOF
 
 # Install Python versions
 PYTHON_VERSIONS=(
-    "3.13.1"  # Latest stable
+    "3.13.7"  # Latest stable (August 2025)
     "3.12.8"  # Previous stable
 )
 

@@ -22,11 +22,16 @@ apt-get install -y patchelf ccache
 mkdir -p /opt/nuitka-cache
 export NUITKA_CACHE_DIR="/opt/nuitka-cache"
 
-# Add Nuitka configuration
+# Add Nuitka configuration to use Clang
 cat > /etc/profile.d/nuitka.sh << 'EOF'
 export NUITKA_CACHE_DIR="/opt/nuitka-cache"
+export CC="clang"
+export CXX="clang++"
 alias nuitka='python3 -m nuitka'
+alias nuitka-clang='python3 -m nuitka --clang'
 EOF
 
-echo "✓ Nuitka installed successfully"
+echo "✓ Nuitka installed successfully (configured to use Clang)"
+echo "Nuitka version:"
 python3 -m nuitka --version
+echo "Configured compiler: clang"

@@ -48,6 +48,7 @@ echo -e "${YELLOW}Programming Languages:${NC}"
 check_version "Java" "java -version" "21" || ((FAILURES++))
 check_version "Kotlin" "kotlin -version" "2.0" || ((FAILURES++))
 check_version "Clojure" "clojure --version" "1.12" || ((FAILURES++))
+check_version "Go" "go version" "1.25" || ((FAILURES++))
 check_version "Python" "python3 --version" "3.12" || ((FAILURES++))
 check_version "Rust" "rustc --version" "1.8" || ((FAILURES++))
 check_version "Node.js" "node --version" "22" || ((FAILURES++))
@@ -68,7 +69,7 @@ echo ""
 
 echo -e "${YELLOW}Build Tools:${NC}"
 check_version "Maven" "mvn --version" "3.9" || ((FAILURES++))
-check_version "Gradle" "gradle --version" "8" || ((FAILURES++))
+check_version "Gradle" "gradle --version" "9" || ((FAILURES++))
 check_version "Leiningen" "lein version" "2" || ((FAILURES++))
 check_version "Cargo" "cargo --version" "1.8" || ((FAILURES++))
 check_version "npm" "npm --version" "10" || ((FAILURES++))
@@ -99,6 +100,7 @@ generate_json_report() {
     echo "    \"java\": \"$(java -version 2>&1 | head -n1 | cut -d'"' -f2 || echo 'not found')\","
     echo "    \"kotlin\": \"$(kotlin -version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || echo 'not found')\","
     echo "    \"clojure\": \"$(clojure --version 2>/dev/null | cut -d' ' -f2 || echo 'not found')\","
+    echo "    \"go\": \"$(go version 2>/dev/null | cut -d' ' -f3 | cut -c3- || echo 'not found')\","
     echo "    \"python\": \"$(python3 --version | cut -d' ' -f2 || echo 'not found')\","
     echo "    \"node\": \"$(node --version | cut -c2- || echo 'not found')\","
     echo "    \"typescript\": \"$(tsc --version | cut -d' ' -f2 || echo 'not found')\","

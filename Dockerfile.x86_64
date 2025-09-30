@@ -75,18 +75,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Stage 02-04: JVM Languages (Java, Kotlin, Clojure)
-RUN chmod +x /tmp/tools/java/install.sh && \
-    /tmp/tools/java/install.sh && \
-    rm /tmp/tools/java/install.sh
-
-RUN chmod +x /tmp/tools/kotlin/install.sh && \
-    /tmp/tools/kotlin/install.sh && \
-    rm /tmp/tools/kotlin/install.sh
-
+# Stage 02: Clojure CLI tools and clj-kondo
 RUN chmod +x /tmp/tools/clojure/install.sh && \
     /tmp/tools/clojure/install.sh && \
     rm /tmp/tools/clojure/install.sh
+
+# Stage 03: Go 1.25.1
+RUN chmod +x /tmp/tools/golang/install.sh && \
+    /tmp/tools/golang/install.sh && \
+    rm /tmp/tools/golang/install.sh
 
 # Stage 05: Python with optimizations
 RUN chmod +x /tmp/tools/python/install.sh /tmp/tools/python/nuitka.sh && \
@@ -111,11 +108,9 @@ RUN chmod +x /tmp/tools/nodejs/install.sh && \
     /tmp/tools/nodejs/install.sh && \
     rm /tmp/tools/nodejs/install.sh
 
-# Stage 09: Build tools (Maven, Gradle)
-RUN chmod +x /tmp/tools/build-tools/maven.sh \
-              /tmp/tools/build-tools/gradle.sh && \
-    /tmp/tools/build-tools/maven.sh && \
-    /tmp/tools/build-tools/gradle.sh && \
+# Stage 09: Build tools (SDKMAN with Java, Maven, Gradle, Kotlin)
+RUN chmod +x /tmp/tools/build-tools/sdkman.sh && \
+    /tmp/tools/build-tools/sdkman.sh && \
     rm /tmp/tools/build-tools/*.sh
 
 # Stage 10: Web tools and package managers

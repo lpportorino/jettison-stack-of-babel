@@ -16,24 +16,25 @@ Provides a consistent, reproducible development environment with all necessary c
 ## 🛠️ Detailed Tool Inventory
 
 ### Programming Languages
-- **Java** - OpenJDK 21 LTS
-- **Kotlin** - 2.2.10 via SDKMAN
-- **Clojure** - 1.12.0 with CLI tools
-- **Python** - Latest stable versions via pyenv
+- **Java** - JDK 25 (Temurin) via SDKMAN
+- **Kotlin** - 2.2.20 via SDKMAN
+- **Clojure** - 1.12.3 with CLI tools and clj-kondo
+- **Go** - 1.25.1
+- **Python** - 3.13.7 and 3.12.8 via pyenv
 - **Rust** - Latest stable via rustup
 - **JavaScript/TypeScript** - Node.js 22 LTS
 - **C/C++** - LLVM/Clang 21
 
 ### Compilers & Transpilers
-- **Nuitka** - Python to C++ compiler
+- **Nuitka** - Python to C++ compiler (configured with Clang)
 - **TypeScript** - JavaScript with types
 - **esbuild** - Fast JavaScript/TypeScript bundler
 - **Bun** - All-in-one JavaScript runtime
 
 ### Build Tools
-- **Maven** - Java/Kotlin build tool (via SDKMAN)
-- **Gradle** - Modern build automation (via SDKMAN)
-- **Leiningen** - Clojure project automation
+- **Maven** - 3.9.11 via SDKMAN
+- **Gradle** - 9.1.0 via SDKMAN
+- **Leiningen** - 2.12.0 via SDKMAN
 - **Cargo** - Rust package manager and build tool
 - **npm** - Node.js package manager (latest)
 - **yarn** - Fast, reliable JavaScript package manager
