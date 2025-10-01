@@ -29,8 +29,20 @@ RUN ln -sf /opt/sdkman/candidates/java/current/bin/java /usr/local/bin/java && \
     ln -sf /opt/sdkman/candidates/gradle/current/bin/gradle /usr/local/bin/gradle && \
     ln -sf /opt/sdkman/candidates/leiningen/current/bin/lein /usr/local/bin/lein
 
+# Install Kotlin tools (ktlint, detekt)
+RUN mkdir -p /opt/kotlin-tools && \
+    curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.5.0/ktlint && \
+    chmod +x ktlint && \
+    mv ktlint /opt/kotlin-tools/ && \
+    ln -sf /opt/kotlin-tools/ktlint /usr/local/bin/ktlint && \
+    curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.7/detekt-cli-1.23.7.zip -o detekt.zip && \
+    unzip -q detekt.zip -d /opt/kotlin-tools/detekt && \
+    rm detekt.zip && \
+    ln -sf /opt/kotlin-tools/detekt/bin/detekt-cli /usr/local/bin/detekt && \
+    chmod +x /opt/kotlin-tools/detekt/bin/detekt-cli
+
 # Fix permissions for any user
-RUN chmod -R 755 /opt/sdkman /opt/clojure 2>/dev/null || true && \
+RUN chmod -R 755 /opt/sdkman /opt/clojure /opt/kotlin-tools 2>/dev/null || true && \
     # Make SDKMAN directories writable for any user
     mkdir -p /opt/sdkman/tmp && chmod 777 /opt/sdkman/tmp && \
     mkdir -p /opt/sdkman/archives && chmod 777 /opt/sdkman/archives && \
@@ -56,6 +68,8 @@ RUN java --version && \
     clojure --version && \
     mvn --version && \
     gradle --version && \
-    lein version
+    lein version && \
+    ktlint --version && \
+    detekt --version
 
 CMD ["/bin/bash"]
