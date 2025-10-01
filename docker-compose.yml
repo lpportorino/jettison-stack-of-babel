@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Base image - built first as all others depend on it
   base:
@@ -14,6 +12,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/jvm/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-base:latest
     image: jon-babylon-jvm:latest
     container_name: jon-babylon-jvm
     depends_on:
@@ -28,6 +28,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/clang/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-base:latest
     image: jon-babylon-clang:latest
     container_name: jon-babylon-clang
     depends_on:
@@ -41,6 +43,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/python/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-clang:latest
     image: jon-babylon-python:latest
     container_name: jon-babylon-python
     depends_on:
@@ -53,6 +57,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/rust/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-base:latest
     image: jon-babylon-rust:latest
     container_name: jon-babylon-rust
     depends_on:
@@ -65,6 +71,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/go/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-base:latest
     image: jon-babylon-go:latest
     container_name: jon-babylon-go
     depends_on:
@@ -77,6 +85,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/web/Dockerfile
+      args:
+        BASE_IMAGE: jon-babylon-base:latest
     image: jon-babylon-web:latest
     container_name: jon-babylon-web
     depends_on:
