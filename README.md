@@ -89,6 +89,8 @@ Complete JVM ecosystem:
 - **Maven 3.9.11** - Project management
 - **Gradle 9.1.0** - Build automation
 - **Leiningen 2.12.0** - Clojure builds
+- **ktlint 1.7.1** - Kotlin linter
+- **detekt 1.23.8** - Kotlin static analysis
 - **clj-kondo** - Clojure linter
 
 ### Clang Container (`jon-babylon-clang`)
