@@ -36,8 +36,9 @@ RUN mkdir -p /opt/kotlin-tools && \
     mv ktlint /opt/kotlin-tools/ && \
     ln -sf /opt/kotlin-tools/ktlint /usr/local/bin/ktlint && \
     curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8.zip -o detekt.zip && \
-    unzip -q detekt.zip -d /opt/kotlin-tools/detekt && \
+    unzip -q detekt.zip -d /opt/kotlin-tools && \
     rm detekt.zip && \
+    mv /opt/kotlin-tools/detekt-cli-1.23.8 /opt/kotlin-tools/detekt && \
     ln -sf /opt/kotlin-tools/detekt/bin/detekt-cli /usr/local/bin/detekt && \
     chmod +x /opt/kotlin-tools/detekt/bin/detekt-cli
 
