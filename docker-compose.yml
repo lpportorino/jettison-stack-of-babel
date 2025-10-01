@@ -44,7 +44,7 @@ services:
       context: .
       dockerfile: dockerfiles/python/Dockerfile
       args:
-        BASE_IMAGE: jon-babylon-clang:latest
+        CLANG_IMAGE: jon-babylon-clang:latest
     image: jon-babylon-python:latest
     container_name: jon-babylon-python
     depends_on:
