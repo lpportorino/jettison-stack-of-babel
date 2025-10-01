@@ -153,24 +153,49 @@ Modern web development:
 
 ## 🏗️ Building from Source
 
-### Build All Containers
+### Build All Containers (Recommended)
 ```bash
-# Build all containers locally
-docker-compose build
+# Use the build script to build all containers in the correct order
+./build-local.sh
+```
+
+This script builds containers in dependency order:
+1. `base` - Foundation for all containers
+2. `clang` - C/C++ tools (depends on base)
+3. `jvm`, `rust`, `go`, `web` - Language containers (depend on base)
+4. `python` - Python with Nuitka (depends on clang)
+
+### Build Specific Containers
+```bash
+# Build base first (required by most containers)
+docker-compose build base
 
 # Build specific container
 docker-compose build jvm
+docker-compose build rust
+docker-compose build go
+docker-compose build web
+
+# Build clang (required by python)
+docker-compose build clang
+
+# Build python (requires clang)
 docker-compose build python
 ```
 
-### Build Individual Container
+### Build Individual Container with Docker CLI
 ```bash
 # Build base first (required by all)
 docker build -t jon-babylon-base:latest -f dockerfiles/base/Dockerfile .
 
 # Then build specific containers
-docker build -t jon-babylon-jvm:latest -f dockerfiles/jvm/Dockerfile .
-docker build -t jon-babylon-python:latest -f dockerfiles/python/Dockerfile .
+docker build -t jon-babylon-jvm:latest \
+  --build-arg BASE_IMAGE=jon-babylon-base:latest \
+  -f dockerfiles/jvm/Dockerfile .
+
+docker build -t jon-babylon-rust:latest \
+  --build-arg BASE_IMAGE=jon-babylon-base:latest \
+  -f dockerfiles/rust/Dockerfile .
 ```
 
 ## 🧪 Testing
@@ -242,6 +267,7 @@ jettison-stack-of-babel/
 │   └── web/              # Node.js/Web tools
 │       └── tests/        # Web/TypeScript tests
 ├── docker-compose.yml    # Multi-container setup
+├── build-local.sh        # Local build script (recommended)
 ├── test-local.sh         # Local test runner
 └── .github/workflows/    # CI/CD pipelines
 ```
@@ -253,7 +279,15 @@ jettison-stack-of-babel/
 All containers respect these variables:
 - `WORKSPACE`: Default `/workspace`
 - `USER`: Default `developer`
-- Tool-specific: `JAVA_HOME`, `CARGO_HOME`, `GOROOT`, etc.
+
+Tool-specific environment variables:
+- **JVM**: `JAVA_HOME=/opt/sdkman/candidates/java/current`, `SDKMAN_DIR=/opt/sdkman`
+- **Go**: `GOROOT=/usr/local/go`, `GOPATH=/opt/go`
+- **Rust**: `CARGO_HOME=/opt/cargo`, `RUSTUP_HOME=/opt/rustup`
+- **Python**: `PYENV_ROOT=/opt/pyenv`
+- **Web**: `BUN_INSTALL=/opt/bun`
+
+All language tools are installed in `/opt` for consistency across containers.
 
 ### Volume Mounts
 
