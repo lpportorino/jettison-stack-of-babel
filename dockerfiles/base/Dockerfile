@@ -125,36 +125,35 @@ RUN useradd -m -s /bin/bash -u 1000 developer && \
     mkdir -p /home/developer/.local/bin && \
     chown -R developer:developer /home/developer
 
+# Install Homebrew for developer user
+USER developer
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/developer/.bashrc
+
+# Add brew to PATH for subsequent RUN commands
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
+
+USER root
+
 # Create workspace directory with permissive permissions for any user
 RUN mkdir -p /workspace && \
     chmod 777 /workspace && \
     mkdir -p /tmp/home && \
     chmod 777 /tmp/home
 
-# Install Neovim (latest version required for NvChad)
-COPY dockerfiles/base/tools/neovim /tmp/tools/neovim
-RUN chmod +x /tmp/tools/neovim/*.sh && \
-    /tmp/tools/neovim/install.sh && \
-    rm -rf /tmp/tools/neovim
+# Install development tools via Homebrew
+USER developer
+RUN brew install neovim zellij fzf bear ripgrep-all fzf-make && \
+    brew cleanup
+
+USER root
 
 # Create vim symlink to nvim
-RUN ln -sf /usr/local/bin/nvim /usr/bin/vim
+RUN ln -sf /home/linuxbrew/.linuxbrew/bin/nvim /usr/bin/vim
 
 # Install custom system tools from source/binaries
 # These tools match the Jettison bootstrap script installations
 # Split into individual RUN commands for better caching and easier debugging
-
-# Zellij - Modern terminal multiplexer
-COPY dockerfiles/base/tools/zellij /tmp/tools/zellij
-RUN chmod +x /tmp/tools/zellij/*.sh && \
-    /tmp/tools/zellij/install.sh && \
-    rm -rf /tmp/tools/zellij
-
-# FZF - Fuzzy finder
-COPY dockerfiles/base/tools/fzf /tmp/tools/fzf
-RUN chmod +x /tmp/tools/fzf/*.sh && \
-    /tmp/tools/fzf/install.sh && \
-    rm -rf /tmp/tools/fzf
 
 # Navi - Interactive cheatsheet tool
 COPY dockerfiles/base/tools/navi /tmp/tools/navi
@@ -162,23 +161,11 @@ RUN chmod +x /tmp/tools/navi/*.sh && \
     /tmp/tools/navi/install.sh && \
     rm -rf /tmp/tools/navi
 
-# Ripgrep - Fast recursive search
-COPY dockerfiles/base/tools/ripgrep /tmp/tools/ripgrep
-RUN chmod +x /tmp/tools/ripgrep/*.sh && \
-    /tmp/tools/ripgrep/install.sh && \
-    rm -rf /tmp/tools/ripgrep
-
 # Hiredis - Redis C client library (built from source)
 COPY dockerfiles/base/tools/hiredis /tmp/tools/hiredis
 RUN chmod +x /tmp/tools/hiredis/*.sh && \
     /tmp/tools/hiredis/install.sh && \
     rm -rf /tmp/tools/hiredis
-
-# Bear - Compilation database generator for C/C++ (built from source)
-COPY dockerfiles/base/tools/bear /tmp/tools/bear
-RUN chmod +x /tmp/tools/bear/*.sh && \
-    /tmp/tools/bear/install.sh && \
-    rm -rf /tmp/tools/bear
 
 # Final cleanup
 RUN rm -rf /tmp/tools
@@ -201,7 +188,7 @@ COPY --chown=developer:developer dockerfiles/base/scripts/check_versions.sh /usr
 RUN chmod +x /usr/local/bin/run_test_wrapper.sh /usr/local/bin/check_versions.sh
 
 # Set up basic environment
-ENV PATH="/home/developer/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/developer/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 ENV USER=developer
 ENV EDITOR=vim
 ENV VISUAL=vim

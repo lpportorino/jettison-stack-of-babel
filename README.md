@@ -83,9 +83,7 @@ Foundation for all other containers with comprehensive development tooling:
 
 **System Utilities:**
 - curl, wget, rsync, openssh-client, mosh, socat
-- git, nano
-- **Neovim 0.11.0** (latest from GitHub releases, vim symlink)
-- tmux, htop, tree, less
+- git, nano, tmux, htop, tree, less
 - jq, bc, xxd, gawk
 - GNU parallel, gdb, stow
 
@@ -124,12 +122,19 @@ Foundation for all other containers with comprehensive development tooling:
 - libglib2.0-0, libjson-glib-1.0-0
 - libsoup-3.0-0, libsoup2.4-1, inotify-tools
 
+**Homebrew Package Manager:**
+- **Homebrew** - Package manager for the developer user, used to install development tools
+
+**Tools Installed via Homebrew:**
+- **Neovim** (latest) - Modern extensible text editor
+- **Zellij** - Modern terminal multiplexer
+- **FZF** - Fuzzy finder for command line
+- **Bear** - Compilation database generator for C/C++
+- **Ripgrep-all (rga)** - Recursive search with support for PDFs, archives, and more
+- **fzf-make** - Interactive Make target selector
+
 **Custom Built Tools:**
-- **Zellij 0.41.2** - Modern terminal multiplexer
-- **FZF 0.58.0** - Fuzzy finder for command line
 - **Navi 2.24.0** - Interactive cheatsheet tool
-- **Ripgrep 14.1.1** - Fast recursive search (rg)
-- **Bear 3.1.6** - Compilation database generator for C/C++
 - **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 optimizations)
 
 **Shell and Editor Configurations:**
@@ -275,7 +280,8 @@ The base container's `check_versions.sh` verifies **60+ tools** including:
 - Debugging tools (valgrind, strace, gdb)
 - Hardware interface tools (can-utils, i2c-tools)
 - Database clients (psql, redis-cli)
-- Custom built tools (zellij, fzf, navi, ripgrep, bear)
+- Homebrew-managed tools (neovim, zellij, fzf, bear, ripgrep-all, fzf-make)
+- Custom built tools (navi, hiredis)
 - Development libraries (hiredis, libssl)
 - Shell and editor configurations (Oh My Bash, NvChad)
 - Environment variables (EDITOR, VISUAL)
@@ -325,13 +331,8 @@ jettison-stack-of-babel/
 ├── dockerfiles/           # Container definitions
 │   ├── base/             # Base container with common tools
 │   │   ├── tools/        # Custom tool installation scripts
-│   │   │   ├── neovim/   # Neovim 0.11 installer
-│   │   │   ├── zellij/   # Zellij installer
-│   │   │   ├── fzf/      # FZF installer
 │   │   │   ├── navi/     # Navi installer
-│   │   │   ├── ripgrep/  # Ripgrep installer
 │   │   │   ├── hiredis/  # Hiredis build script
-│   │   │   ├── bear/     # Bear build script
 │   │   │   ├── oh-my-bash/ # Oh My Bash installer
 │   │   │   └── nvchad/   # NvChad installer
 │   │   ├── scripts/      # Utility scripts

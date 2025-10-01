@@ -148,8 +148,10 @@ echo "=== Custom Built Tools ==="
 check_version zellij
 check_version fzf
 check_version navi
-check_version rg "ripgrep (rg)"
+check_version rg "--version" "ripgrep (rg)"
+check_version rga "--version" "ripgrep-all (rga)"
 check_version bear
+check_command fzf-make "fzf-make"
 echo ""
 
 # Shell and Editor Configurations
