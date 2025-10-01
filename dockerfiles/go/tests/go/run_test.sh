@@ -89,8 +89,20 @@ echo -e "${GREEN}✓${NC}"
 
 # Test air (hot reload tool)
 echo "Testing air installation..."
-which air
-air -v
+if command -v air &> /dev/null; then
+    air -v
+elif [ -f "/home/developer/go/bin/air" ]; then
+    /home/developer/go/bin/air -v
+elif [ -f "$HOME/go/bin/air" ]; then
+    $HOME/go/bin/air -v
+else
+    echo -e "${RED}✗ air not found${NC}"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    echo "PATH: $PATH"
+    echo "GOPATH: $GOPATH"
+    ls -la $HOME/go/bin/ || echo "go/bin directory not found"
+    exit 1
+fi
 TESTS_PASSED=$((TESTS_PASSED + 1))
 echo -e "${GREEN}✓${NC}"
 

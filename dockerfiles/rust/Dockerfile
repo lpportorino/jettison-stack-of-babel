@@ -33,16 +33,19 @@ RUN export CARGO_HOME=/opt/cargo && \
     /opt/cargo/bin/cargo install cargo-edit && \
     /opt/cargo/bin/cargo install cargo-watch
 
-# Fix permissions
+# Fix permissions - make cargo and rustup directories writable for all users
+# This is necessary for CI environments where user IDs may not match
 RUN chown -R developer:developer /opt/cargo /opt/rustup 2>/dev/null || true && \
-    chmod -R 755 /opt/cargo /opt/rustup 2>/dev/null || true
+    chmod -R 777 /opt/cargo /opt/rustup 2>/dev/null || true
 
 # Clean up
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.cache && \
     rm -rf /opt/cargo/registry/cache && \
-    rm -rf /opt/cargo/git/checkouts
+    rm -rf /opt/cargo/git/checkouts && \
+    mkdir -p /opt/cargo/registry/cache /opt/cargo/git/checkouts && \
+    chmod -R 777 /opt/cargo
 
 # Switch back to developer
 USER developer
