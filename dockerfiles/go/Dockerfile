@@ -14,17 +14,17 @@ RUN chmod +x /tmp/tools/**/*.sh && \
 
 # Setup environment
 ENV GOROOT="/usr/local/go"
-ENV GOPATH="/home/developer/go"
-ENV PATH="/usr/local/go/bin:/home/developer/go/bin:${PATH}"
+ENV GOPATH="/opt/go"
+ENV PATH="/usr/local/go/bin:/opt/go/bin:${PATH}"
 
 # Create Go workspace directories with permissive permissions
 RUN mkdir -p /tmp/go/{bin,src,pkg} && \
     chmod -R 777 /tmp/go && \
-    mkdir -p /home/developer/go/{bin,src,pkg} && \
-    chmod -R 755 /home/developer/go
+    mkdir -p /opt/go/{bin,src,pkg} && \
+    chmod -R 777 /opt/go
 
 # Install Go tools
-RUN export GOPATH=/home/developer/go && \
+RUN export GOPATH=/opt/go && \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
     go install github.com/go-task/task/v3/cmd/task@latest && \
     go install github.com/air-verse/air@latest && \
@@ -33,7 +33,7 @@ RUN export GOPATH=/home/developer/go && \
     go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Fix permissions for any user - world-writable for CI environments
-RUN chmod -R 777 /home/developer/go && \
+RUN chmod -R 777 /opt/go && \
     # Make go module cache accessible
     mkdir -p /tmp/go-cache && chmod 777 /tmp/go-cache
 

@@ -91,18 +91,17 @@ echo -e "${GREEN}✓${NC}"
 echo "Testing air installation..."
 if command -v air &> /dev/null; then
     air -v
-elif [ -f "/home/developer/go/bin/air" ]; then
-    /home/developer/go/bin/air -v
-elif [ -f "$HOME/go/bin/air" ]; then
-    $HOME/go/bin/air -v
+elif [ -f "/opt/go/bin/air" ]; then
+    /opt/go/bin/air -v
+elif [ -f "$GOPATH/bin/air" ]; then
+    $GOPATH/bin/air -v
 else
     echo -e "${RED}✗ air not found${NC}"
     TESTS_FAILED=$((TESTS_FAILED + 1))
     echo "PATH: $PATH"
     echo "GOPATH: $GOPATH"
-    echo "HOME: $HOME"
-    ls -la /home/developer/go/bin/ 2>/dev/null || echo "/home/developer/go/bin/ not found"
-    ls -la $HOME/go/bin/ 2>/dev/null || echo "$HOME/go/bin/ not found"
+    ls -la /opt/go/bin/ 2>/dev/null || echo "/opt/go/bin/ not found"
+    ls -la $GOPATH/bin/ 2>/dev/null || echo "$GOPATH/bin/ not found"
     exit 1
 fi
 TESTS_PASSED=$((TESTS_PASSED + 1))

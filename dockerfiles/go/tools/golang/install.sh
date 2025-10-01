@@ -42,7 +42,7 @@ rm "$GO_TARBALL"
 # Set up environment
 cat > /etc/profile.d/go.sh << 'EOF'
 export PATH=$PATH:/usr/local/go/bin
-export GOPATH=/home/developer/go
+export GOPATH=/opt/go
 export PATH=$PATH:$GOPATH/bin
 EOF
 
