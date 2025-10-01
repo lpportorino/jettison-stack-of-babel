@@ -100,7 +100,9 @@ else
     TESTS_FAILED=$((TESTS_FAILED + 1))
     echo "PATH: $PATH"
     echo "GOPATH: $GOPATH"
-    ls -la $HOME/go/bin/ || echo "go/bin directory not found"
+    echo "HOME: $HOME"
+    ls -la /home/developer/go/bin/ 2>/dev/null || echo "/home/developer/go/bin/ not found"
+    ls -la $HOME/go/bin/ 2>/dev/null || echo "$HOME/go/bin/ not found"
     exit 1
 fi
 TESTS_PASSED=$((TESTS_PASSED + 1))

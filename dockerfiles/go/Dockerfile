@@ -32,8 +32,8 @@ RUN export GOPATH=/home/developer/go && \
     go install golang.org/x/tools/cmd/goimports@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest
 
-# Fix permissions for any user
-RUN chmod -R 755 /home/developer/go && \
+# Fix permissions for any user - world-writable for CI environments
+RUN chmod -R 777 /home/developer/go && \
     # Make go module cache accessible
     mkdir -p /tmp/go-cache && chmod 777 /tmp/go-cache
 
