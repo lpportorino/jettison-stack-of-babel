@@ -56,19 +56,18 @@ docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
 
 **Note**: The `-u $(id -u):$(id -g)` flag runs the container with your host user ID, ensuring files created in the container have proper ownership on your host system.
 
-### Using Docker Compose
+### Running Containers Interactively
 
 ```bash
-# Start all containers
-docker-compose up -d
+# Run locally built images
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
+  jon-babylon-jvm:latest
 
-# Use specific container
-docker-compose exec jvm bash
-docker-compose exec python bash
-docker-compose exec rust bash
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
+  jon-babylon-python:latest
 
-# Stop all containers
-docker-compose down
+docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
+  jon-babylon-rust:latest
 ```
 
 ## 📦 Container Details
@@ -165,30 +164,18 @@ This script builds containers in dependency order:
 3. `jvm`, `rust`, `go`, `web` - Language containers (depend on base)
 4. `python` - Python with Nuitka (depends on clang)
 
-### Build Specific Containers
-```bash
-# Build base first (required by most containers)
-docker-compose build base
+### Build Individual Containers
 
-# Build specific container
-docker-compose build jvm
-docker-compose build rust
-docker-compose build go
-docker-compose build web
-
-# Build clang (required by python)
-docker-compose build clang
-
-# Build python (requires clang)
-docker-compose build python
-```
-
-### Build Individual Container with Docker CLI
 ```bash
 # Build base first (required by all)
 docker build -t jon-babylon-base:latest -f dockerfiles/base/Dockerfile .
 
-# Then build specific containers
+# Build clang (required by python)
+docker build -t jon-babylon-clang:latest \
+  --build-arg BASE_IMAGE=jon-babylon-base:latest \
+  -f dockerfiles/clang/Dockerfile .
+
+# Build other containers (each requires base)
 docker build -t jon-babylon-jvm:latest \
   --build-arg BASE_IMAGE=jon-babylon-base:latest \
   -f dockerfiles/jvm/Dockerfile .
@@ -196,6 +183,19 @@ docker build -t jon-babylon-jvm:latest \
 docker build -t jon-babylon-rust:latest \
   --build-arg BASE_IMAGE=jon-babylon-base:latest \
   -f dockerfiles/rust/Dockerfile .
+
+docker build -t jon-babylon-go:latest \
+  --build-arg BASE_IMAGE=jon-babylon-base:latest \
+  -f dockerfiles/go/Dockerfile .
+
+docker build -t jon-babylon-web:latest \
+  --build-arg BASE_IMAGE=jon-babylon-base:latest \
+  -f dockerfiles/web/Dockerfile .
+
+# Build python (requires clang)
+docker build -t jon-babylon-python:latest \
+  --build-arg CLANG_IMAGE=jon-babylon-clang:latest \
+  -f dockerfiles/python/Dockerfile .
 ```
 
 ## 🧪 Testing
@@ -266,7 +266,6 @@ jettison-stack-of-babel/
 │   │   └── tests/        # Go module tests
 │   └── web/              # Node.js/Web tools
 │       └── tests/        # Web/TypeScript tests
-├── docker-compose.yml    # Multi-container setup
 ├── build-local.sh        # Local build script (recommended)
 ├── test-local.sh         # Local test runner
 └── .github/workflows/    # CI/CD pipelines
