@@ -31,11 +31,11 @@ RUN ln -sf /opt/sdkman/candidates/java/current/bin/java /usr/local/bin/java && \
 
 # Install Kotlin tools (ktlint, detekt)
 RUN mkdir -p /opt/kotlin-tools && \
-    curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.5.0/ktlint && \
+    curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.7.1/ktlint && \
     chmod +x ktlint && \
     mv ktlint /opt/kotlin-tools/ && \
     ln -sf /opt/kotlin-tools/ktlint /usr/local/bin/ktlint && \
-    curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.7/detekt-cli-1.23.7.zip -o detekt.zip && \
+    curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8.zip -o detekt.zip && \
     unzip -q detekt.zip -d /opt/kotlin-tools/detekt && \
     rm detekt.zip && \
     ln -sf /opt/kotlin-tools/detekt/bin/detekt-cli /usr/local/bin/detekt && \
