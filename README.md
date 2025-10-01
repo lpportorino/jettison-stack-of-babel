@@ -73,12 +73,71 @@ docker run -it --rm -u $(id -u):$(id -g) -v $(pwd):/workspace \
 ## 📦 Container Details
 
 ### Base Container (`jon-babylon-base`)
-Foundation for all other containers:
+Foundation for all other containers with comprehensive development tooling:
+
+**System Foundation:**
 - Ubuntu 22.04 LTS
-- Git, curl, wget, vim, nano
-- Build essentials
 - Developer user (UID 1000)
 - Workspace at `/workspace`
+- Environment: `EDITOR=vim`, `VISUAL=vim` (neovim with vim symlink)
+
+**System Utilities:**
+- curl, wget, rsync, openssh-client, mosh, socat
+- git, nano
+- **Neovim 0.11.0** (latest from GitHub releases, vim symlink)
+- tmux, htop, tree, less
+- jq, bc, xxd, gawk
+- GNU parallel, gdb, stow
+
+**Compression Tools:**
+- zip, unzip, p7zip-full, xz-utils
+
+**Build Tools:**
+- build-essential (gcc, g++, make)
+- pkg-config, autoconf, automake, libtool
+- bison, flex, m4, texinfo
+- ccache, patchelf
+
+**CMake (from Kitware):**
+- cmake, cmake-curses-gui, cmake-extras
+
+**Debugging Tools:**
+- valgrind, strace, sshpass
+
+**Media Tools:**
+- ffmpeg
+
+**Hardware Interface Tools:**
+- can-utils (CAN bus), i2c-tools (I2C), minicom (serial)
+
+**Database Clients:**
+- postgresql-client (psql), redis-tools (redis-cli)
+
+**Development Headers:**
+- libssl-dev, libpq-dev, libhiredis-dev, libczmq-dev
+- libnm-dev, uuid-dev, libglib2.0-dev
+- gobject-introspection, libjson-glib-dev
+- libsoup-3.0-dev, libsoup2.4-dev, libinotifytools0-dev
+
+**Runtime Libraries:**
+- libssl3, libpq5, libczmq4, libnm0
+- libglib2.0-0, libjson-glib-1.0-0
+- libsoup-3.0-0, libsoup2.4-1, inotify-tools
+
+**Custom Built Tools:**
+- **Zellij 0.41.2** - Modern terminal multiplexer
+- **FZF 0.58.0** - Fuzzy finder for command line
+- **Navi 2.24.0** - Interactive cheatsheet tool
+- **Ripgrep 14.1.1** - Fast recursive search (rg)
+- **Bear 3.1.6** - Compilation database generator for C/C++
+- **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 optimizations)
+
+**Shell and Editor Configurations:**
+- **Oh My Bash** - Bash framework with all plugins enabled (installed for root and developer users)
+  - Plugins: ansible, asdf, aws, bash-preexec, bashmarks, battery, brew, cargo, colored-man-pages, chezmoi, dotnet, fasd, fzf, gcloud, git, goenv, golang, jump, kubectl, npm, nvm, pyenv, rbenv, sdkman, sudo, tmux-autoattach, vagrant, virtualenvwrapper, xterm, zellij-autoattach, zoxide
+- **NvChad** - Neovim configuration with modern IDE features (installed for root and developer users)
+  - Pre-configured with Lazy.nvim plugin manager
+  - Mason for LSP/DAP/linter/formatter management
 
 ### JVM Container (`jon-babylon-jvm`)
 Complete JVM ecosystem:
@@ -204,10 +263,22 @@ Each container includes comprehensive test suites and a version check script:
 
 ```bash
 # Check all tools in a container
+docker run --rm ghcr.io/lpportorino/jon-babylon-base:latest check_versions.sh
 docker run --rm ghcr.io/lpportorino/jon-babylon-jvm:latest check_versions.sh
 docker run --rm ghcr.io/lpportorino/jon-babylon-python:latest check_versions.sh
 docker run --rm ghcr.io/lpportorino/jon-babylon-rust:latest check_versions.sh
 ```
+
+The base container's `check_versions.sh` verifies **60+ tools** including:
+- All system utilities and compression tools
+- Complete build toolchain (gcc, make, cmake, autoconf, etc.)
+- Debugging tools (valgrind, strace, gdb)
+- Hardware interface tools (can-utils, i2c-tools)
+- Database clients (psql, redis-cli)
+- Custom built tools (zellij, fzf, navi, ripgrep, bear)
+- Development libraries (hiredis, libssl)
+- Shell and editor configurations (Oh My Bash, NvChad)
+- Environment variables (EDITOR, VISUAL)
 
 ### Local Testing
 
@@ -253,6 +324,17 @@ Build status: ![Build Status](https://github.com/lpportorino/jettison-stack-of-b
 jettison-stack-of-babel/
 ├── dockerfiles/           # Container definitions
 │   ├── base/             # Base container with common tools
+│   │   ├── tools/        # Custom tool installation scripts
+│   │   │   ├── neovim/   # Neovim 0.11 installer
+│   │   │   ├── zellij/   # Zellij installer
+│   │   │   ├── fzf/      # FZF installer
+│   │   │   ├── navi/     # Navi installer
+│   │   │   ├── ripgrep/  # Ripgrep installer
+│   │   │   ├── hiredis/  # Hiredis build script
+│   │   │   ├── bear/     # Bear build script
+│   │   │   ├── oh-my-bash/ # Oh My Bash installer
+│   │   │   └── nvchad/   # NvChad installer
+│   │   ├── scripts/      # Utility scripts
 │   │   └── tests/        # Base container tests
 │   ├── jvm/              # Java/Kotlin/Clojure
 │   │   └── tests/        # JVM language tests
@@ -278,6 +360,8 @@ jettison-stack-of-babel/
 All containers respect these variables:
 - `WORKSPACE`: Default `/workspace`
 - `USER`: Default `developer`
+- `EDITOR`: Default `vim` (neovim)
+- `VISUAL`: Default `vim` (neovim)
 
 Tool-specific environment variables:
 - **JVM**: `JAVA_HOME=/opt/sdkman/candidates/java/current`, `SDKMAN_DIR=/opt/sdkman`
@@ -314,6 +398,158 @@ The containers are optimized to work with any user ID, making them perfect for:
 - Local development with proper file ownership
 - CI/CD pipelines with runner-specific users
 - Multi-user development environments
+
+## 🔌 Using with Dev Containers
+
+These containers are designed to work seamlessly with VS Code Dev Containers and GitHub Codespaces. Create a `.devcontainer/devcontainer.json` in your project:
+
+### Basic Configuration
+
+```jsonc
+{
+  "name": "My Project",
+  "image": "ghcr.io/lpportorino/jon-babylon-base:latest",
+  // Or use a language-specific container:
+  // "image": "ghcr.io/lpportorino/jon-babylon-rust:latest",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "llvm-vs-code-extensions.vscode-clangd"
+      ]
+    }
+  }
+}
+```
+
+### Persisting Configurations
+
+To persist your Oh My Bash and NvChad configurations across container rebuilds, mount them to your host:
+
+```jsonc
+{
+  "name": "My Project",
+  "image": "ghcr.io/lpportorino/jon-babylon-base:latest",
+
+  "mounts": [
+    // Persist Oh My Bash configuration
+    "source=${localWorkspaceFolder}/.devcontainer/oh-my-bash,target=/home/developer/.oh-my-bash,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer/bashrc,target=/home/developer/.bashrc,type=bind",
+
+    // Persist NvChad configuration and plugins
+    "source=${localWorkspaceFolder}/.devcontainer/nvim,target=/home/developer/.config/nvim,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer/nvim-data,target=/home/developer/.local/share/nvim,type=bind"
+  ],
+
+  // Initialize configs on first run
+  "postCreateCommand": "test -d .devcontainer/oh-my-bash || cp -r ~/.oh-my-bash .devcontainer/ && test -d .devcontainer/nvim || cp -r ~/.config/nvim .devcontainer/"
+}
+```
+
+### Adding Navi Cheat Sheets
+
+Create custom navi cheat sheets for your project-specific commands:
+
+```jsonc
+{
+  "name": "My Project",
+  "image": "ghcr.io/lpportorino/jon-babylon-base:latest",
+
+  "mounts": [
+    // Add custom navi cheats
+    "source=${localWorkspaceFolder}/.devcontainer/navi-cheats,target=/home/developer/.local/share/navi/cheats/custom,type=bind"
+  ]
+}
+```
+
+Create cheat sheets in `.devcontainer/navi-cheats/`:
+
+```bash
+# .devcontainer/navi-cheats/project.cheat
+% myproject, build
+
+# Build the project
+make build
+
+# Run tests
+make test
+
+# Deploy to staging
+make deploy ENV=staging
+
+$ ENV: echo -e "staging\nproduction"
+```
+
+### Using Dev Container Features
+
+Extend containers with additional tools using [Dev Container Features](https://containers.dev/features):
+
+```jsonc
+{
+  "name": "My Project",
+  "image": "ghcr.io/lpportorino/jon-babylon-rust:latest",
+
+  "features": {
+    // Add GitHub CLI
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+
+    // Add Docker-in-Docker
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+
+    // Add AWS CLI
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+
+    // Add Terraform
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest"
+    }
+  }
+}
+```
+
+**Search for more features at**: https://containers.dev/features
+
+### Complete Example
+
+```jsonc
+{
+  "name": "Full Stack Project",
+  "image": "ghcr.io/lpportorino/jon-babylon-web:latest",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "mounts": [
+    // Persist shell configuration
+    "source=${localWorkspaceFolder}/.devcontainer/bashrc,target=/home/developer/.bashrc,type=bind",
+
+    // Persist NvChad config
+    "source=${localWorkspaceFolder}/.devcontainer/nvim,target=/home/developer/.config/nvim,type=bind",
+
+    // Add project-specific navi cheats
+    "source=${localWorkspaceFolder}/.devcontainer/navi-cheats,target=/home/developer/.local/share/navi/cheats/custom,type=bind"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "postCreateCommand": "npm install",
+
+  "remoteUser": "developer"
+}
+```
 
 ## 🚢 Container Selection Guide
 

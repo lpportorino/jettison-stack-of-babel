@@ -8,30 +8,113 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-# Install common system dependencies
+# Add Kitware repository for latest CMake
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
-        curl \
         gnupg \
-        lsb-release \
-        software-properties-common \
+        wget && \
+    # Add Kitware GPG key
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+        gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
+    # Add Kitware repository
+    echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main" | \
+        tee /etc/apt/sources.list.d/kitware.list && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install system dependencies and development tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        # Base system tools
+        curl \
         wget \
         sudo \
         locales \
+        lsb-release \
+        software-properties-common \
+        # System utilities
+        rsync \
+        openssh-client \
+        mosh \
+        socat \
         git \
-        unzip \
-        xz-utils \
-        build-essential \
-        pkg-config \
-        libssl-dev \
-        vim \
         nano \
         less \
         tree \
-        htop && \
+        tmux \
+        htop \
+        jq \
+        bc \
+        xxd \
+        gawk \
+        parallel \
+        gdb \
+        stow \
+        # Compression tools
+        unzip \
+        zip \
+        xz-utils \
+        p7zip-full \
+        # Build tools
+        build-essential \
+        make \
+        pkg-config \
+        autoconf \
+        automake \
+        libtool \
+        libtool-bin \
+        bison \
+        flex \
+        m4 \
+        texinfo \
+        ccache \
+        patchelf \
+        # CMake from Kitware
+        cmake \
+        cmake-curses-gui \
+        cmake-extras \
+        # Debugging tools
+        valgrind \
+        strace \
+        sshpass \
+        # Media tools
+        ffmpeg \
+        # Hardware interface tools
+        can-utils \
+        i2c-tools \
+        minicom \
+        # Database clients
+        postgresql-client \
+        redis-tools \
+        # Development headers
+        libssl-dev \
+        libpq-dev \
+        libhiredis-dev \
+        libczmq-dev \
+        libnm-dev \
+        uuid-dev \
+        # Runtime libraries
+        libssl3 \
+        libpq5 \
+        libhiredis0.14 \
+        libczmq4 \
+        libnm0 \
+        libglib2.0-0 \
+        libglib2.0-dev \
+        libjson-glib-1.0-0 \
+        libjson-glib-dev \
+        libsoup-3.0-0 \
+        libsoup-3.0-dev \
+        libsoup2.4-1 \
+        libsoup2.4-dev \
+        libinotifytools0-dev \
+        inotify-tools \
+        gobject-introspection && \
     locale-gen en_US.UTF-8 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -48,6 +131,70 @@ RUN mkdir -p /workspace && \
     mkdir -p /tmp/home && \
     chmod 777 /tmp/home
 
+# Install Neovim (latest version required for NvChad)
+COPY dockerfiles/base/tools/neovim /tmp/tools/neovim
+RUN chmod +x /tmp/tools/neovim/*.sh && \
+    /tmp/tools/neovim/install.sh && \
+    rm -rf /tmp/tools/neovim
+
+# Create vim symlink to nvim
+RUN ln -sf /usr/local/bin/nvim /usr/bin/vim
+
+# Install custom system tools from source/binaries
+# These tools match the Jettison bootstrap script installations
+# Split into individual RUN commands for better caching and easier debugging
+
+# Zellij - Modern terminal multiplexer
+COPY dockerfiles/base/tools/zellij /tmp/tools/zellij
+RUN chmod +x /tmp/tools/zellij/*.sh && \
+    /tmp/tools/zellij/install.sh && \
+    rm -rf /tmp/tools/zellij
+
+# FZF - Fuzzy finder
+COPY dockerfiles/base/tools/fzf /tmp/tools/fzf
+RUN chmod +x /tmp/tools/fzf/*.sh && \
+    /tmp/tools/fzf/install.sh && \
+    rm -rf /tmp/tools/fzf
+
+# Navi - Interactive cheatsheet tool
+COPY dockerfiles/base/tools/navi /tmp/tools/navi
+RUN chmod +x /tmp/tools/navi/*.sh && \
+    /tmp/tools/navi/install.sh && \
+    rm -rf /tmp/tools/navi
+
+# Ripgrep - Fast recursive search
+COPY dockerfiles/base/tools/ripgrep /tmp/tools/ripgrep
+RUN chmod +x /tmp/tools/ripgrep/*.sh && \
+    /tmp/tools/ripgrep/install.sh && \
+    rm -rf /tmp/tools/ripgrep
+
+# Hiredis - Redis C client library (built from source)
+COPY dockerfiles/base/tools/hiredis /tmp/tools/hiredis
+RUN chmod +x /tmp/tools/hiredis/*.sh && \
+    /tmp/tools/hiredis/install.sh && \
+    rm -rf /tmp/tools/hiredis
+
+# Bear - Compilation database generator for C/C++ (built from source)
+COPY dockerfiles/base/tools/bear /tmp/tools/bear
+RUN chmod +x /tmp/tools/bear/*.sh && \
+    /tmp/tools/bear/install.sh && \
+    rm -rf /tmp/tools/bear
+
+# Final cleanup
+RUN rm -rf /tmp/tools
+
+# Oh My Bash - Bash framework for root user
+COPY dockerfiles/base/tools/oh-my-bash /tmp/tools/oh-my-bash
+RUN chmod +x /tmp/tools/oh-my-bash/*.sh && \
+    /tmp/tools/oh-my-bash/install.sh && \
+    rm -rf /tmp/tools/oh-my-bash
+
+# NvChad - Neovim configuration for root user
+COPY dockerfiles/base/tools/nvchad /tmp/tools/nvchad
+RUN chmod +x /tmp/tools/nvchad/*.sh && \
+    /tmp/tools/nvchad/install.sh && \
+    rm -rf /tmp/tools/nvchad
+
 # Copy common scripts
 COPY --chown=developer:developer dockerfiles/base/scripts/run_test_wrapper.sh /usr/local/bin/run_test_wrapper.sh
 COPY --chown=developer:developer dockerfiles/base/scripts/check_versions.sh /usr/local/bin/check_versions.sh
@@ -56,10 +203,27 @@ RUN chmod +x /usr/local/bin/run_test_wrapper.sh /usr/local/bin/check_versions.sh
 # Set up basic environment
 ENV PATH="/home/developer/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 ENV USER=developer
+ENV EDITOR=vim
+ENV VISUAL=vim
 
 # Switch to developer user
 USER developer
 WORKDIR /workspace
+
+# Oh My Bash - Bash framework for developer user
+COPY --chown=developer:developer dockerfiles/base/tools/oh-my-bash /home/developer/.install-tmp/oh-my-bash
+RUN chmod +x /home/developer/.install-tmp/oh-my-bash/*.sh && \
+    /home/developer/.install-tmp/oh-my-bash/install.sh && \
+    rm -rf /home/developer/.install-tmp/oh-my-bash
+
+# NvChad - Neovim configuration for developer user
+COPY --chown=developer:developer dockerfiles/base/tools/nvchad /home/developer/.install-tmp/nvchad
+RUN chmod +x /home/developer/.install-tmp/nvchad/*.sh && \
+    /home/developer/.install-tmp/nvchad/install.sh && \
+    rm -rf /home/developer/.install-tmp
+
+# Verify all tools are installed and available
+RUN /usr/local/bin/check_versions.sh
 
 # Default command
 CMD ["/bin/bash"]
