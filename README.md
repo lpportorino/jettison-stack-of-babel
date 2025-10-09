@@ -12,7 +12,7 @@ A collection of specialized polyglot Docker containers for the Jettison project.
 | `jon-babylon-jvm` | Java, Kotlin, Clojure | base |
 | `jon-babylon-clang` | C/C++ development | base |
 | `jon-babylon-python` | Python with Nuitka | clang |
-| `jon-babylon-rust` | Rust development | base |
+| `jon-babylon-rust` | Rust with C/C++ FFI | clang |
 | `jon-babylon-go` | Go development | base |
 | `jon-babylon-web` | Node.js, TypeScript, Bun | base |
 
@@ -112,7 +112,7 @@ Foundation for all other containers with comprehensive development tooling:
 - postgresql-client (psql), redis-tools (redis-cli)
 
 **Development Headers:**
-- libssl-dev, libpq-dev, libhiredis-dev, libczmq-dev
+- libssl-dev, libpq-dev, libczmq-dev
 - libnm-dev, uuid-dev, libglib2.0-dev
 - gobject-introspection, libjson-glib-dev
 - libsoup-3.0-dev, libsoup2.4-dev, libinotifytools0-dev
@@ -135,7 +135,7 @@ Foundation for all other containers with comprehensive development tooling:
 
 **Custom Built Tools:**
 - **Navi 2.24.0** - Interactive cheatsheet tool
-- **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 optimizations)
+- **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 Cortex-A78 optimizations)
 
 **Shell and Editor Configurations:**
 - **Oh My Bash** - Bash framework with all plugins enabled (installed for root and developer users)
@@ -225,8 +225,8 @@ Modern web development:
 This script builds containers in dependency order:
 1. `base` - Foundation for all containers
 2. `clang` - C/C++ tools (depends on base)
-3. `jvm`, `rust`, `go`, `web` - Language containers (depend on base)
-4. `python` - Python with Nuitka (depends on clang)
+3. `jvm`, `go`, `web` - Language containers (depend on base)
+4. `python`, `rust` - Python with Nuitka and Rust with C/C++ FFI (depend on clang)
 
 ### Build Individual Containers
 
@@ -244,10 +244,6 @@ docker build -t jon-babylon-jvm:latest \
   --build-arg BASE_IMAGE=jon-babylon-base:latest \
   -f dockerfiles/jvm/Dockerfile .
 
-docker build -t jon-babylon-rust:latest \
-  --build-arg BASE_IMAGE=jon-babylon-base:latest \
-  -f dockerfiles/rust/Dockerfile .
-
 docker build -t jon-babylon-go:latest \
   --build-arg BASE_IMAGE=jon-babylon-base:latest \
   -f dockerfiles/go/Dockerfile .
@@ -256,10 +252,14 @@ docker build -t jon-babylon-web:latest \
   --build-arg BASE_IMAGE=jon-babylon-base:latest \
   -f dockerfiles/web/Dockerfile .
 
-# Build python (requires clang)
+# Build python and rust (require clang for C/C++ integration)
 docker build -t jon-babylon-python:latest \
   --build-arg CLANG_IMAGE=jon-babylon-clang:latest \
   -f dockerfiles/python/Dockerfile .
+
+docker build -t jon-babylon-rust:latest \
+  --build-arg CLANG_IMAGE=jon-babylon-clang:latest \
+  -f dockerfiles/rust/Dockerfile .
 ```
 
 ## 🧪 Testing

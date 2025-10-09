@@ -94,14 +94,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         # Development headers
         libssl-dev \
         libpq-dev \
-        libhiredis-dev \
         libczmq-dev \
         libnm-dev \
         uuid-dev \
         # Runtime libraries
         libssl3 \
         libpq5 \
-        libhiredis0.14 \
         libczmq4 \
         libnm0 \
         libglib2.0-0 \

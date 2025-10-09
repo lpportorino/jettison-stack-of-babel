@@ -1,6 +1,7 @@
 # Rust Container - Rust development tools
-ARG BASE_IMAGE=ghcr.io/lpportorino/jon-babylon-base:latest
-FROM ${BASE_IMAGE}
+# Builds on Clang container for C/C++ FFI support
+ARG CLANG_IMAGE=ghcr.io/lpportorino/jon-babylon-clang:latest
+FROM ${CLANG_IMAGE}
 
 # Switch to root for installation
 USER root
