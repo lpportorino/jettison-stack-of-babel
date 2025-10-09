@@ -380,8 +380,6 @@ jobs:
                   -v "$(pwd)/$test_subdir:/workspace" \
                   -w /workspace \
                   -e HOME=/tmp/home \
-                  -e CARGO_HOME=/tmp/cargo \
-                  -e RUSTUP_HOME=/tmp/rustup \
                   ${{ env.IMAGE_PREFIX }}-rust:test-${{ matrix.arch }} \
                   bash run_test.sh || exit 1
 
