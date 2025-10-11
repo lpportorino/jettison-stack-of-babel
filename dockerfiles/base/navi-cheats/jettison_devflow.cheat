@@ -1,0 +1,133 @@
+% jettison, crane, devcontainer, registry
+
+# Setup SSH tunnel to Jetson registry
+ssh -f -N -L 5000:localhost:5000 archer@jetson.local
+
+# Check SSH tunnel is active
+ps aux | grep "ssh.*5000:localhost:5000"
+
+# Kill SSH tunnel
+pkill -f "ssh.*5000:localhost:5000"
+
+# Verify registry connection
+curl http://localhost:5000/v2/
+
+# List all images in registry
+crane catalog localhost:5000
+
+# List tags for specific image
+crane ls localhost:5000/<image_path>
+
+# Get image manifest
+crane manifest localhost:5000/<image_path>:<tag>
+
+# Get image config and labels
+crane config localhost:5000/<image_path>:<tag> | jq
+
+# Cross-compile Go for ARM64
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o out/<binary_name> <source_path>
+
+# Cross-compile Rust for ARM64
+cargo build --release --target aarch64-unknown-linux-gnu
+
+# Create layer tarball (single binary)
+tar -C out -czf layer.tgz <binary_name>
+
+# Create layer tarball (multiple files)
+tar -czf layer.tgz -C out <binary_name> config/ assets/
+
+# Get git metadata for image labels
+export GIT_REPO=$(git config --get remote.origin.url) && \
+export GIT_COMMIT=$(git rev-parse HEAD) && \
+export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
+export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") && \
+echo "Repo: $GIT_REPO" && \
+echo "Commit: $GIT_COMMIT" && \
+echo "Branch: $GIT_BRANCH" && \
+echo "Date: $BUILD_DATE"
+
+# Assemble image from layer tarball with git labels
+GIT_REPO=$(git config --get remote.origin.url) && \
+GIT_COMMIT=$(git rev-parse HEAD) && \
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") && \
+crane append --base <base_image> --new_layer layer.tgz \
+  --tag localhost:5000/<project>/<image>:${GIT_COMMIT} && \
+crane mutate localhost:5000/<project>/<image>:${GIT_COMMIT} \
+  --entrypoint '["/<binary_name>"]' \
+  --label org.opencontainers.image.created="${BUILD_DATE}" \
+  --label org.opencontainers.image.source="${GIT_REPO}" \
+  --label org.opencontainers.image.revision="${GIT_COMMIT}" \
+  --label org.opencontainers.image.version="${GIT_COMMIT:0:8}" \
+  --label com.jettison.git.branch="${GIT_BRANCH}" \
+  --tag localhost:5000/<project>/<image>:${GIT_COMMIT} && \
+crane tag localhost:5000/<project>/<image>:${GIT_COMMIT} latest
+
+# Tag existing image as latest (triggers auto-update)
+crane tag localhost:5000/<image_path>:<tag> latest
+
+# Copy image between tags
+crane copy localhost:5000/<image_path>:<source_tag> localhost:5000/<image_path>:<dest_tag>
+
+# Delete image tag
+crane delete localhost:5000/<image_path>:<tag>
+
+# Get git commit from image labels
+crane config localhost:5000/<image_path>:<tag> | jq -r '.config.Labels["org.opencontainers.image.revision"]'
+
+# Get build date from image labels
+crane config localhost:5000/<image_path>:<tag> | jq -r '.config.Labels["org.opencontainers.image.created"]'
+
+# Get git repository from image labels
+crane config localhost:5000/<image_path>:<tag> | jq -r '.config.Labels["org.opencontainers.image.source"]'
+
+# Get git branch from image labels
+crane config localhost:5000/<image_path>:<tag> | jq -r '.config.Labels["com.jettison.git.branch"]'
+
+# Find all tags for specific commit
+for tag in $(crane ls localhost:5000/<image_path>); do \
+  commit=$(crane config localhost:5000/<image_path>:$tag 2>/dev/null | jq -r '.config.Labels["org.opencontainers.image.revision"] // empty'); \
+  [ "$commit" = "<commit_sha>" ] && echo "$tag"; \
+done
+
+# List all labels for image
+crane config localhost:5000/<image_path>:<tag> | jq -r '.config.Labels | to_entries[] | "\(.key): \(.value)"'
+
+# Rollback: Find old commit and tag as latest
+crane ls localhost:5000/<image_path> | grep <commit_prefix>
+
+# Clean up old images (keep last 10)
+crane ls localhost:5000/<image_path> | grep -v "latest" | head -n -10 | xargs -I {} crane delete localhost:5000/<image_path>:{}
+
+# Verify image digest
+crane digest localhost:5000/<image_path>:<tag>
+
+# Pull image manifest and inspect layers
+crane manifest localhost:5000/<image_path>:<tag> | jq
+
+# Export image to tarball
+crane pull localhost:5000/<image_path>:<tag> image.tar
+
+# Push tarball to registry
+crane push image.tar localhost:5000/<image_path>:<tag>
+
+# Mutate existing image (change entrypoint/env/labels)
+crane mutate localhost:5000/<image_path>:<tag> \
+  --entrypoint '["<new_entrypoint>"]' \
+  --env KEY=VALUE \
+  --label key=value \
+  --tag localhost:5000/<image_path>:<new_tag>
+
+$ image_path: crane catalog localhost:5000 2>/dev/null | jq -r '.repositories[]' --- --fzf-overrides '--height 40%'
+$ tag: crane ls "localhost:5000/$image_path" 2>/dev/null --- --fzf-overrides '--height 40%'
+$ source_tag: crane ls "localhost:5000/$image_path" 2>/dev/null --- --fzf-overrides '--height 40%'
+$ dest_tag: echo -e "latest\nstaging\nproduction\ndev" --- --fzf-overrides '--height 40%'
+$ base_image: echo -e "debian:bookworm-slim\nubuntu:22.04\nalpine:latest\nscratch" --- --fzf-overrides '--height 40%'
+$ project: echo -e "myproject\nlibrary\ntest\ndev" --- --fzf-overrides '--height 40%'
+$ image: echo "myapp"
+$ binary_name: find out -type f -executable 2>/dev/null | sed 's|^out/||' --- --fzf-overrides '--height 40%'
+$ source_path: echo "."
+$ commit_sha: crane ls "localhost:5000/$image_path" 2>/dev/null | grep -E '^[a-f0-9]{7,40}$' --- --fzf-overrides '--height 40%'
+$ commit_prefix: echo ""
+$ new_entrypoint: echo "/app/myapp"
+$ new_tag: echo "latest"

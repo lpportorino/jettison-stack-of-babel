@@ -141,7 +141,7 @@ RUN mkdir -p /workspace && \
 
 # Install development tools via Homebrew
 USER developer
-RUN brew install neovim zellij fzf bear ripgrep-all fzf-make && \
+RUN brew install neovim zellij fzf bear ripgrep-all fzf-make crane && \
     brew cleanup
 
 USER root
@@ -206,6 +206,10 @@ COPY --chown=developer:developer dockerfiles/base/tools/nvchad /home/developer/.
 RUN chmod +x /home/developer/.install-tmp/nvchad/*.sh && \
     /home/developer/.install-tmp/nvchad/install.sh && \
     rm -rf /home/developer/.install-tmp
+
+# Install Navi cheatsheets for Jettison dev workflow
+RUN mkdir -p /home/developer/.local/share/navi/cheats/jettison
+COPY --chown=developer:developer dockerfiles/base/navi-cheats/*.cheat /home/developer/.local/share/navi/cheats/jettison/
 
 # Verify all tools are installed and available
 RUN /usr/local/bin/check_versions.sh

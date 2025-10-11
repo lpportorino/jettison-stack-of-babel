@@ -132,9 +132,10 @@ Foundation for all other containers with comprehensive development tooling:
 - **Bear** - Compilation database generator for C/C++
 - **Ripgrep-all (rga)** - Recursive search with support for PDFs, archives, and more
 - **fzf-make** - Interactive Make target selector
+- **Crane** - OCI registry tool for pushing/pulling images without Docker daemon
 
 **Custom Built Tools:**
-- **Navi 2.24.0** - Interactive cheatsheet tool
+- **Navi 2.24.0** - Interactive cheatsheet tool with Jettison dev workflow cheats
 - **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 Cortex-A78 optimizations)
 
 **Shell and Editor Configurations:**
@@ -335,6 +336,7 @@ jettison-stack-of-babel/
 │   │   │   ├── hiredis/  # Hiredis build script
 │   │   │   ├── oh-my-bash/ # Oh My Bash installer
 │   │   │   └── nvchad/   # NvChad installer
+│   │   ├── navi-cheats/  # Built-in navi cheat sheets for Jettison workflows
 │   │   ├── scripts/      # Utility scripts
 │   │   └── tests/        # Base container tests
 │   ├── jvm/              # Java/Kotlin/Clojure
@@ -448,9 +450,30 @@ To persist your Oh My Bash and NvChad configurations across container rebuilds, 
 }
 ```
 
-### Adding Navi Cheat Sheets
+### Built-in Navi Cheat Sheets
 
-Create custom navi cheat sheets for your project-specific commands:
+All base containers include Jettison-specific navi cheat sheets for common development workflows:
+
+**Included Cheat Sheets:**
+- **jettison_devflow.cheat** - Crane workflow for cross-compilation and registry operations
+  - SSH tunnel setup to Jetson registry
+  - Cross-compilation commands (Go, Rust, C/C++)
+  - Image assembly with git metadata labels
+  - Image tagging and rollback operations
+  - Registry querying and management
+
+Use navi interactively:
+```bash
+# Launch interactive cheat search
+navi
+
+# Search for specific workflow (e.g., "crane push", "ssh tunnel", "cross-compile")
+# Press Ctrl+G to search, Enter to execute command
+```
+
+### Adding Custom Navi Cheat Sheets
+
+Create project-specific navi cheat sheets for your commands:
 
 ```jsonc
 {

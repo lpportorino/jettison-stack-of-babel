@@ -152,6 +152,7 @@ check_version rg "--version" "ripgrep (rg)"
 check_version rga "--version" "ripgrep-all (rga)"
 check_version bear
 check_command fzf-make "fzf-make"
+check_version crane "version" "crane"
 echo ""
 
 # Shell and Editor Configurations
