@@ -26,10 +26,30 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install ARM64 cross-compilation dependencies
+# Required for cross-compiling C projects like lighthouse to ARM64
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    dpkg --add-architecture arm64 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        crossbuild-essential-arm64 \
+        libc6-dev:arm64 \
+        libglib2.0-dev:arm64 \
+        libpq-dev:arm64 \
+        pkg-config && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Setup environment
 ENV CC=clang
 ENV CXX=clang++
 ENV PATH="/usr/lib/llvm-21/bin:${PATH}"
+
+# Configure pkg-config for ARM64 cross-compilation
+# This allows pkg-config to find ARM64 libraries when cross-compiling
+ENV PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig"
+ENV PKG_CONFIG_LIBDIR="/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig"
 
 # Create symlinks for common names
 RUN ln -sf /usr/lib/llvm-21/bin/clang /usr/local/bin/clang && \
