@@ -25,22 +25,8 @@ RUN ln -sf /opt/cargo/bin/rustc /usr/local/bin/rustc && \
     ln -sf /opt/cargo/bin/rustfmt /usr/local/bin/rustfmt && \
     ln -sf /opt/cargo/bin/cargo-clippy /usr/local/bin/cargo-clippy
 
-# Install additional Rust tools and clean up after each to save space
-RUN export CARGO_HOME=/opt/cargo && \
-    export RUSTUP_HOME=/opt/rustup && \
-    /opt/cargo/bin/rustup default stable && \
-    # Install cargo-audit
-    /opt/cargo/bin/cargo install cargo-audit && \
-    rm -rf /opt/cargo/registry/cache/* /opt/cargo/registry/src/* && \
-    # Install cargo-outdated
-    /opt/cargo/bin/cargo install cargo-outdated && \
-    rm -rf /opt/cargo/registry/cache/* /opt/cargo/registry/src/* && \
-    # Install cargo-edit
-    /opt/cargo/bin/cargo install cargo-edit && \
-    rm -rf /opt/cargo/registry/cache/* /opt/cargo/registry/src/* && \
-    # Install cargo-watch
-    /opt/cargo/bin/cargo install cargo-watch && \
-    rm -rf /opt/cargo/registry/cache/* /opt/cargo/registry/src/*
+# Clean up cargo registry to save space (tools already installed by install.sh)
+RUN rm -rf /opt/cargo/registry/cache/* /opt/cargo/registry/src/*
 
 # Aggressive cleanup and fix permissions
 RUN apt-get clean && \

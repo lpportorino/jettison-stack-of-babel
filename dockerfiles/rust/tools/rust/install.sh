@@ -54,8 +54,13 @@ source /etc/profile.d/rust.sh
 # Set default toolchain (important for rustup symlinks to work)
 $CARGO_HOME/bin/rustup default stable
 
-# Install common Rust tools
-$CARGO_HOME/bin/cargo install cargo-watch cargo-edit cargo-outdated cargo-audit
+# Install common Rust tools (install separately to avoid failing on one tool)
+echo "Installing cargo tools..."
+$CARGO_HOME/bin/cargo install cargo-watch || echo "Warning: cargo-watch failed to install"
+$CARGO_HOME/bin/cargo install cargo-edit || echo "Warning: cargo-edit failed to install"
+$CARGO_HOME/bin/cargo install cargo-audit || echo "Warning: cargo-audit failed to install"
+# cargo-outdated is optional and may fail on some Rust versions
+$CARGO_HOME/bin/cargo install cargo-outdated || echo "Warning: cargo-outdated failed to install (optional)"
 
 echo "✓ Rust installed successfully"
 $CARGO_HOME/bin/rustc --version
