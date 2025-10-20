@@ -31,6 +31,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     dpkg --add-architecture arm64 && \
+    # Configure apt to use ports.ubuntu.com for arm64 packages
+    sed -i 's|^deb \([a-z]* \)\?http://archive.ubuntu.com/ubuntu|deb [arch=amd64] \1http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list && \
+    sed -i 's|^deb \([a-z]* \)\?http://security.ubuntu.com/ubuntu|deb [arch=amd64] \1http://security.ubuntu.com/ubuntu|g' /etc/apt/sources.list && \
+    echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         crossbuild-essential-arm64 \
