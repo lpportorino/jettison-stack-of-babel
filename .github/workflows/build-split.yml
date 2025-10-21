@@ -24,23 +24,13 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/jon-babylon
 
 jobs:
-  # Build base image first
+  # Build base image first (AMD64 only for dev containers)
   build-base:
-    name: Build Base Image (${{ matrix.arch }})
-    runs-on: ${{ matrix.runner }}
+    name: Build Base Image
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-        include:
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-22.04
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-22.04-arm
 
     steps:
       - name: Checkout code
@@ -61,31 +51,31 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/base/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: false
           load: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-base:test-${{ matrix.arch }}
-            ${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=base-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=base-${{ matrix.arch }},ignore-error=true
+            ${{ env.IMAGE_PREFIX }}-base:test
+            ${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}
+          cache-from: type=gha,scope=base
+          cache-to: type=gha,mode=max,scope=base,ignore-error=true
 
       - name: Test base image
         run: |
-          docker run --rm ${{ env.IMAGE_PREFIX }}-base:test-${{ matrix.arch }} check_versions.sh
+          docker run --rm ${{ env.IMAGE_PREFIX }}-base:test check_versions.sh
 
       - name: Push base image
         if: github.event_name != 'pull_request'
         run: |
-          docker tag ${{ env.IMAGE_PREFIX }}-base:test-${{ matrix.arch }} ${{ env.IMAGE_PREFIX }}-base:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-base:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}-${{ matrix.arch }}
+          docker tag ${{ env.IMAGE_PREFIX }}-base:test ${{ env.IMAGE_PREFIX }}-base:latest
+          docker push ${{ env.IMAGE_PREFIX }}-base:latest
+          docker push ${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}
 
-  # Build all other containers in parallel
+  # Build all other containers in parallel (AMD64 only)
   build-containers:
-    name: Build ${{ matrix.container }} Container (${{ matrix.arch }})
+    name: Build ${{ matrix.container }} Container
     needs: build-base
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
@@ -93,14 +83,6 @@ jobs:
       fail-fast: false
       matrix:
         container: [jvm, clang, go, web]
-        arch: [amd64, arm64]
-        include:
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-22.04
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-22.04-arm
 
     steps:
       - name: Checkout code
@@ -121,16 +103,16 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/${{ matrix.container }}/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: false
           load: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }}
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=${{ matrix.container }}-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.container }}-${{ matrix.arch }},ignore-error=true
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.container }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.container }},ignore-error=true
           build-args: |
-            BASE_IMAGE=${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}-${{ matrix.arch }}
+            BASE_IMAGE=${{ env.IMAGE_PREFIX }}-base:${{ github.sha }}
 
       - name: Test ${{ matrix.container }} image
         run: |
@@ -138,7 +120,7 @@ jobs:
 
           # Run version check
           echo "Running version check..."
-          docker run --rm ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} check_versions.sh
+          docker run --rm ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test check_versions.sh
 
           # Run container-specific tests
           echo "Running container tests..."
@@ -160,7 +142,7 @@ jobs:
                   -e GOCACHE=/tmp/go-cache \
                   -e GRADLE_USER_HOME=/tmp/gradle \
                   -e MAVEN_USER_HOME=/tmp/maven \
-                  ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} \
+                  ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test \
                   bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
@@ -175,28 +157,18 @@ jobs:
       - name: Push ${{ matrix.container }} image
         if: github.event_name != 'pull_request'
         run: |
-          docker tag ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test-${{ matrix.arch }} ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-${{ matrix.arch }}
+          docker tag ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:test ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest
+          docker push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest
+          docker push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}
 
-  # Build Python container (depends on Clang)
+  # Build Python container (depends on Clang, AMD64 only)
   build-python:
-    name: Build Python Container (${{ matrix.arch }})
+    name: Build Python Container
     needs: build-containers
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-        include:
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-22.04
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-22.04-arm
 
     steps:
       - name: Checkout code
@@ -234,16 +206,16 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/python/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: false
           load: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }}
-            ${{ env.IMAGE_PREFIX }}-python:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=python-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=python-${{ matrix.arch }},ignore-error=true
+            ${{ env.IMAGE_PREFIX }}-python:test
+            ${{ env.IMAGE_PREFIX }}-python:${{ github.sha }}
+          cache-from: type=gha,scope=python
+          cache-to: type=gha,mode=max,scope=python,ignore-error=true
           build-args: |
-            CLANG_IMAGE=${{ env.IMAGE_PREFIX }}-clang:${{ github.sha }}-${{ matrix.arch }}
+            CLANG_IMAGE=${{ env.IMAGE_PREFIX }}-clang:${{ github.sha }}
 
       - name: Test Python image
         run: |
@@ -251,7 +223,7 @@ jobs:
 
           # Run version check
           echo "Running version check..."
-          docker run --rm ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} check_versions.sh
+          docker run --rm ${{ env.IMAGE_PREFIX }}-python:test check_versions.sh
 
           # Run Python-specific tests
           echo "Running Python tests..."
@@ -271,7 +243,7 @@ jobs:
                   -e HOME=/tmp/home \
                   -e PYTHONUSERBASE=/tmp/python \
                   -e PIP_CACHE_DIR=/tmp/pip-cache \
-                  ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} \
+                  ${{ env.IMAGE_PREFIX }}-python:test \
                   bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
@@ -286,28 +258,18 @@ jobs:
       - name: Push Python image
         if: github.event_name != 'pull_request'
         run: |
-          docker tag ${{ env.IMAGE_PREFIX }}-python:test-${{ matrix.arch }} ${{ env.IMAGE_PREFIX }}-python:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-python:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-python:${{ github.sha }}-${{ matrix.arch }}
+          docker tag ${{ env.IMAGE_PREFIX }}-python:test ${{ env.IMAGE_PREFIX }}-python:latest
+          docker push ${{ env.IMAGE_PREFIX }}-python:latest
+          docker push ${{ env.IMAGE_PREFIX }}-python:${{ github.sha }}
 
-  # Build Rust container (depends on Clang)
+  # Build Rust container (depends on Clang, AMD64 only)
   build-rust:
-    name: Build Rust Container (${{ matrix.arch }})
+    name: Build Rust Container
     needs: build-containers
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-        include:
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-22.04
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-22.04-arm
 
     steps:
       - name: Checkout code
@@ -345,16 +307,16 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/rust/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: false
           load: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-rust:test-${{ matrix.arch }}
-            ${{ env.IMAGE_PREFIX }}-rust:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=rust-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=rust-${{ matrix.arch }},ignore-error=true
+            ${{ env.IMAGE_PREFIX }}-rust:test
+            ${{ env.IMAGE_PREFIX }}-rust:${{ github.sha }}
+          cache-from: type=gha,scope=rust
+          cache-to: type=gha,mode=max,scope=rust,ignore-error=true
           build-args: |
-            CLANG_IMAGE=${{ env.IMAGE_PREFIX }}-clang:${{ github.sha }}-${{ matrix.arch }}
+            CLANG_IMAGE=${{ env.IMAGE_PREFIX }}-clang:${{ github.sha }}
 
       - name: Test Rust image
         run: |
@@ -362,7 +324,7 @@ jobs:
 
           # Run version check
           echo "Running version check..."
-          docker run --rm ${{ env.IMAGE_PREFIX }}-rust:test-${{ matrix.arch }} check_versions.sh
+          docker run --rm ${{ env.IMAGE_PREFIX }}-rust:test check_versions.sh
 
           # Run Rust-specific tests
           echo "Running Rust tests..."
@@ -380,7 +342,7 @@ jobs:
                   -v "$(pwd)/$test_subdir:/workspace" \
                   -w /workspace \
                   -e HOME=/tmp/home \
-                  ${{ env.IMAGE_PREFIX }}-rust:test-${{ matrix.arch }} \
+                  ${{ env.IMAGE_PREFIX }}-rust:test \
                   bash run_test.sh || exit 1
 
                 echo "✓ $TEST_NAME tests passed"
@@ -395,45 +357,6 @@ jobs:
       - name: Push Rust image
         if: github.event_name != 'pull_request'
         run: |
-          docker tag ${{ env.IMAGE_PREFIX }}-rust:test-${{ matrix.arch }} ${{ env.IMAGE_PREFIX }}-rust:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-rust:latest-${{ matrix.arch }}
-          docker push ${{ env.IMAGE_PREFIX }}-rust:${{ github.sha }}-${{ matrix.arch }}
-
-  # Create multi-arch manifests
-  create-manifests:
-    name: Create Multi-arch Manifests
-    needs: [build-containers, build-python, build-rust]
-    runs-on: ubuntu-22.04
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        container: [base, jvm, clang, python, rust, go, web]
-
-    steps:
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create and push multi-arch manifest
-        run: |
-          # Create manifest for latest tag
-          docker manifest create \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest-amd64 \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest-arm64
-
-          docker manifest push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:latest
-
-          # Create manifest for commit SHA
-          docker manifest create \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }} \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-amd64 \
-            ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}-arm64
-
-          docker manifest push ${{ env.IMAGE_PREFIX }}-${{ matrix.container }}:${{ github.sha }}
+          docker tag ${{ env.IMAGE_PREFIX }}-rust:test ${{ env.IMAGE_PREFIX }}-rust:latest
+          docker push ${{ env.IMAGE_PREFIX }}-rust:latest
+          docker push ${{ env.IMAGE_PREFIX }}-rust:${{ github.sha }}

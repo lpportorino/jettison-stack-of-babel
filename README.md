@@ -22,7 +22,7 @@ A collection of specialized polyglot Docker containers for the Jettison project.
 - **Faster Builds**: Containers build in parallel
 - **Better Caching**: Changes to one toolchain don't invalidate others
 - **Flexibility**: Use only the containers you need
-- **Multi-arch**: All containers support both AMD64 and ARM64
+- **AMD64 Dev Containers**: Optimized for x86_64 development with ARM64 cross-compilation support
 
 ## 🚀 Quick Start
 
@@ -320,21 +320,21 @@ Run the comprehensive test suite locally:
 
 Tests are automatically run in CI/CD before pushing images to the registry, ensuring all tools are properly installed and functioning.
 
-## 📊 Multi-Architecture Support
+## 📊 Architecture
 
-All containers are built natively for both AMD64 and ARM64 architectures using GitHub's native runners (no QEMU emulation), ensuring:
-- Native performance on all platforms
-- Full compatibility with Apple Silicon Macs
-- Optimized for AWS Graviton instances
-- Perfect for traditional x86_64 systems
+All containers are built for AMD64 (x86_64) architecture, optimized for:
+- Development on x86_64 workstations and laptops
+- CI/CD pipelines on standard GitHub Actions runners
+- ARM64 cross-compilation support via clang container toolchain
+- Optimized hiredis libraries for both AMD64 and ARM64 targets
 
 ## 🔄 CI/CD
 
 GitHub Actions automatically:
-1. Builds all containers in parallel on native runners (AMD64 and ARM64)
+1. Builds all containers in parallel on AMD64 runners
 2. Runs comprehensive test suites for each container
 3. Only pushes to GitHub Container Registry if all tests pass
-4. Creates multi-arch manifests for seamless platform support
+4. Provides ARM64 cross-compilation support through clang container
 
 Build status: ![Build Status](https://github.com/lpportorino/jettison-stack-of-babel/actions/workflows/build-split.yml/badge.svg)
 
@@ -603,12 +603,8 @@ Choose containers based on your project needs:
 ## 🏷️ Tags
 
 All containers follow this tagging scheme:
-- `latest` - Latest multi-arch build
-- `latest-amd64` - Latest AMD64 build
-- `latest-arm64` - Latest ARM64 build
-- `{sha}` - Specific commit (multi-arch)
-- `{sha}-amd64` - Specific commit AMD64
-- `{sha}-arm64` - Specific commit ARM64
+- `latest` - Latest AMD64 build
+- `{sha}` - Specific commit AMD64 build
 
 ## 📄 License
 
