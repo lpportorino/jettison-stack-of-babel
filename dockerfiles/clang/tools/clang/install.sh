@@ -52,6 +52,7 @@ update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy
 update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-$LLVM_VERSION 100
 update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-$LLVM_VERSION 100
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-$LLVM_VERSION 100
+update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/lib/llvm-$LLVM_VERSION/bin/llvm-ar 100
 
 echo "✓ LLVM/Clang $LLVM_VERSION installed successfully"
 clang --version

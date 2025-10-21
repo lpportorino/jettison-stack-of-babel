@@ -70,7 +70,8 @@ RUN ln -sf /usr/lib/llvm-21/bin/clang /usr/local/bin/clang && \
     ln -sf /usr/lib/llvm-21/bin/clang++ /usr/local/bin/clang++ && \
     ln -sf /usr/lib/llvm-21/bin/clang-format /usr/local/bin/clang-format && \
     ln -sf /usr/lib/llvm-21/bin/clang-tidy /usr/local/bin/clang-tidy && \
-    ln -sf /usr/lib/llvm-21/bin/lld /usr/local/bin/lld
+    ln -sf /usr/lib/llvm-21/bin/lld /usr/local/bin/lld && \
+    ln -sf /usr/lib/llvm-21/bin/llvm-ar /usr/local/bin/llvm-ar
 
 # Switch back to developer
 USER developer
