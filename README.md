@@ -136,7 +136,6 @@ Foundation for all other containers with comprehensive development tooling:
 
 **Custom Built Tools:**
 - **Navi 2.24.0** - Interactive cheatsheet tool with Jettison dev workflow cheats
-- **Hiredis 1.3.0** - Redis C client library (built from source with ARM64 Cortex-A78 optimizations)
 
 **Shell and Editor Configurations:**
 - **Oh My Bash** - Bash framework with all plugins enabled (installed for root and developer users)
@@ -167,6 +166,20 @@ Modern C/C++ development:
 - **ccache** - Compilation cache
 - **valgrind** - Memory debugging
 - **gdb** - Debugger
+
+**ARM64 Cross-Compilation Support:**
+- **crossbuild-essential-arm64** - ARM64 cross-compilation toolchain
+- **libc6-dev:arm64** - C standard library headers
+- **libglib2.0-dev:arm64** - GLib development headers
+- **libpq-dev:arm64** - PostgreSQL client library
+- **pkg-config** - Library configuration tool for cross-compilation
+
+**Custom Built Libraries (Clang 21):**
+- **Hiredis 1.3.0** - Redis C client library built from source
+  - **AMD64 Native**: Optimized with Clang 21 (-O3)
+  - **ARM64 Cross-Compiled**: Highly optimized for NVIDIA Jetson AGX Orin (Cortex-A78AE)
+    - Architecture: ARMv8.2-A with crypto, fp16, rcpc, dotprod, lse extensions
+    - Tuned for maximum performance on edge devices
 
 ### Python Container (`jon-babylon-python`)
 Python with compilation support:
@@ -281,9 +294,9 @@ The base container's `check_versions.sh` verifies **60+ tools** including:
 - Debugging tools (valgrind, strace, gdb)
 - Hardware interface tools (can-utils, i2c-tools)
 - Database clients (psql, redis-cli)
-- Homebrew-managed tools (neovim, zellij, fzf, bear, ripgrep-all, fzf-make)
-- Custom built tools (navi, hiredis)
-- Development libraries (hiredis, libssl)
+- Homebrew-managed tools (neovim, zellij, fzf, bear, ripgrep-all, fzf-make, crane)
+- Custom built tools (navi)
+- Development libraries (libssl, libpq, libglib)
 - Shell and editor configurations (Oh My Bash, NvChad)
 - Environment variables (EDITOR, VISUAL)
 
@@ -333,16 +346,17 @@ jettison-stack-of-babel/
 │   ├── base/             # Base container with common tools
 │   │   ├── tools/        # Custom tool installation scripts
 │   │   │   ├── navi/     # Navi installer
-│   │   │   ├── hiredis/  # Hiredis build script
 │   │   │   ├── oh-my-bash/ # Oh My Bash installer
 │   │   │   └── nvchad/   # NvChad installer
 │   │   ├── navi-cheats/  # Built-in navi cheat sheets for Jettison workflows
 │   │   ├── scripts/      # Utility scripts
 │   │   └── tests/        # Base container tests
+│   ├── clang/            # C/C++ tools
+│   │   ├── tools/        # C/C++ specific tools
+│   │   │   └── hiredis/  # Hiredis build script (AMD64 + ARM64)
+│   │   └── tests/        # C/C++ compilation tests
 │   ├── jvm/              # Java/Kotlin/Clojure
 │   │   └── tests/        # JVM language tests
-│   ├── clang/            # C/C++ tools
-│   │   └── tests/        # C/C++ compilation tests
 │   ├── python/           # Python with Nuitka
 │   │   └── tests/        # Python/Nuitka tests
 │   ├── rust/             # Rust toolchain

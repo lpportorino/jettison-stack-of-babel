@@ -48,6 +48,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Build hiredis from source for ARM64 cross-compilation
+# This gives us optimized ARM64 libraries with Cortex-A78AE tuning
+COPY dockerfiles/clang/tools/hiredis /tmp/tools/hiredis
+RUN chmod +x /tmp/tools/hiredis/*.sh && \
+    /tmp/tools/hiredis/install.sh && \
+    rm -rf /tmp/tools/hiredis
+
 # Setup environment
 ENV CC=clang
 ENV CXX=clang++

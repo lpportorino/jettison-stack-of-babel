@@ -157,13 +157,7 @@ RUN ln -sf /home/linuxbrew/.linuxbrew/bin/nvim /usr/bin/vim
 COPY dockerfiles/base/tools/navi /tmp/tools/navi
 RUN chmod +x /tmp/tools/navi/*.sh && \
     /tmp/tools/navi/install.sh && \
-    rm -rf /tmp/tools/navi
-
-# Hiredis - Redis C client library (built from source)
-COPY dockerfiles/base/tools/hiredis /tmp/tools/hiredis
-RUN chmod +x /tmp/tools/hiredis/*.sh && \
-    /tmp/tools/hiredis/install.sh && \
-    rm -rf /tmp/tools/hiredis
+    rm -rf /tmp/tools
 
 # Final cleanup
 RUN rm -rf /tmp/tools
