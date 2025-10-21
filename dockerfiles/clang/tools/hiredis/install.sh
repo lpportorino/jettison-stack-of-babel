@@ -61,15 +61,21 @@ export CFLAGS="--target=aarch64-linux-gnu \
 echo "Building hiredis for ARM64 (Cortex-A78AE with all extensions)..."
 echo "  Target: NVIDIA Jetson AGX Orin"
 echo "  Extensions: crypto, fp16, rcpc, dotprod, lse"
+echo "  Note: Building static library only (shared library requires complex cross-linking)"
 
-make -j$(nproc) \
+# Build only static library for ARM64 (shared library is difficult to cross-compile)
+make -j$(nproc) libhiredis.a \
     PREFIX=/usr/aarch64-linux-gnu \
     CC="${CC}" \
     AR="${AR}" \
     CFLAGS="${CFLAGS}"
 
-echo "Installing ARM64 hiredis..."
-make install PREFIX=/usr/aarch64-linux-gnu
+echo "Installing ARM64 hiredis (static library and headers)..."
+# Manually install static library and headers (skip shared library)
+mkdir -p /usr/aarch64-linux-gnu/include/hiredis /usr/aarch64-linux-gnu/include/hiredis/adapters /usr/aarch64-linux-gnu/lib
+cp -pPR hiredis.h async.h read.h sds.h alloc.h sockcompat.h /usr/aarch64-linux-gnu/include/hiredis
+cp -pPR adapters/*.h /usr/aarch64-linux-gnu/include/hiredis/adapters
+cp -pPR libhiredis.a /usr/aarch64-linux-gnu/lib
 
 # Create pkg-config file for ARM64
 mkdir -p /usr/lib/aarch64-linux-gnu/pkgconfig
