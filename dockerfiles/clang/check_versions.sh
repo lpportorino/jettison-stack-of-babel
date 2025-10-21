@@ -24,6 +24,7 @@ else
     echo "⚠ Hiredis (AMD64): pkg-config not found (may be installed without .pc file)"
 fi
 
+# AMD64 libraries
 if [ -f /usr/local/lib/libhiredis.a ]; then
     echo "✓ Hiredis static library (AMD64): /usr/local/lib/libhiredis.a"
 else
@@ -31,10 +32,25 @@ else
     exit 1
 fi
 
+if [ -f /usr/local/lib/libhiredis.so ]; then
+    echo "✓ Hiredis shared library (AMD64): /usr/local/lib/libhiredis.so"
+else
+    echo "✗ Hiredis shared library (AMD64) not found"
+    exit 1
+fi
+
+# ARM64 libraries
 if [ -f /usr/aarch64-linux-gnu/lib/libhiredis.a ]; then
     echo "✓ Hiredis static library (ARM64): /usr/aarch64-linux-gnu/lib/libhiredis.a"
 else
     echo "✗ Hiredis static library (ARM64) not found"
+    exit 1
+fi
+
+if [ -f /usr/aarch64-linux-gnu/lib/libhiredis.so ]; then
+    echo "✓ Hiredis shared library (ARM64): /usr/aarch64-linux-gnu/lib/libhiredis.so"
+else
+    echo "✗ Hiredis shared library (ARM64) not found"
     exit 1
 fi
 echo ""

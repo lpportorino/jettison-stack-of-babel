@@ -58,24 +58,27 @@ export CFLAGS="--target=aarch64-linux-gnu \
 -O3 \
 -fPIC"
 
+# Use LLD (LLVM linker) for ARM64 shared library linking
+export LDFLAGS="--target=aarch64-linux-gnu \
+-fuse-ld=lld \
+-L/usr/aarch64-linux-gnu/lib"
+
 echo "Building hiredis for ARM64 (Cortex-A78AE with all extensions)..."
 echo "  Target: NVIDIA Jetson AGX Orin"
 echo "  Extensions: crypto, fp16, rcpc, dotprod, lse"
-echo "  Note: Building static library only (shared library requires complex cross-linking)"
+echo "  Linker: LLD (LLVM linker)"
+echo "  Building: Static AND Shared libraries"
 
-# Build only static library for ARM64 (shared library is difficult to cross-compile)
-make -j$(nproc) libhiredis.a \
+# Build both static and shared libraries using LLD linker
+make -j$(nproc) \
     PREFIX=/usr/aarch64-linux-gnu \
     CC="${CC}" \
     AR="${AR}" \
+    LDFLAGS="${LDFLAGS}" \
     CFLAGS="${CFLAGS}"
 
-echo "Installing ARM64 hiredis (static library and headers)..."
-# Manually install static library and headers (skip shared library)
-mkdir -p /usr/aarch64-linux-gnu/include/hiredis /usr/aarch64-linux-gnu/include/hiredis/adapters /usr/aarch64-linux-gnu/lib
-cp -pPR hiredis.h async.h read.h sds.h alloc.h sockcompat.h /usr/aarch64-linux-gnu/include/hiredis
-cp -pPR adapters/*.h /usr/aarch64-linux-gnu/include/hiredis/adapters
-cp -pPR libhiredis.a /usr/aarch64-linux-gnu/lib
+echo "Installing ARM64 hiredis..."
+make install PREFIX=/usr/aarch64-linux-gnu
 
 # Create pkg-config file for ARM64
 mkdir -p /usr/lib/aarch64-linux-gnu/pkgconfig
@@ -117,6 +120,11 @@ if [ ! -f /usr/aarch64-linux-gnu/lib/libhiredis.a ]; then
     exit 1
 fi
 
+if [ ! -f /usr/aarch64-linux-gnu/lib/libhiredis.so ]; then
+    echo "ERROR: ARM64 shared library not found"
+    exit 1
+fi
+
 if [ ! -f /usr/aarch64-linux-gnu/include/hiredis/hiredis.h ]; then
     echo "ERROR: ARM64 headers not found"
     exit 1
@@ -131,13 +139,16 @@ echo "✓✓✓ Hiredis build complete ✓✓✓"
 echo ""
 echo "AMD64 Native:"
 echo "  Compiler: Clang 21"
-echo "  Library:  /usr/local/lib/libhiredis.a"
+echo "  Static:   /usr/local/lib/libhiredis.a"
+echo "  Shared:   /usr/local/lib/libhiredis.so"
 echo "  Headers:  /usr/local/include/hiredis/"
 echo ""
 echo "ARM64 Cross-Compiled:"
 echo "  Compiler: Clang 21"
+echo "  Linker:   LLD (LLVM linker)"
 echo "  Target:   NVIDIA Jetson AGX Orin (Cortex-A78AE)"
 echo "  Arch:     ARMv8.2-A+crypto+fp16+rcpc+dotprod+lse"
-echo "  Library:  /usr/aarch64-linux-gnu/lib/libhiredis.a"
+echo "  Static:   /usr/aarch64-linux-gnu/lib/libhiredis.a"
+echo "  Shared:   /usr/aarch64-linux-gnu/lib/libhiredis.so"
 echo "  Headers:  /usr/aarch64-linux-gnu/include/hiredis/"
 echo ""
