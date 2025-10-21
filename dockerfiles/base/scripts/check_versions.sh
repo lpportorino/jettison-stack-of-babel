@@ -179,15 +179,6 @@ echo ""
 # Libraries (via pkg-config)
 echo "=== Development Libraries ==="
 TOTAL=$((TOTAL + 1))
-if pkg-config --exists hiredis 2>/dev/null; then
-    echo -e "${GREEN}✓${NC} hiredis: $(pkg-config --modversion hiredis)"
-    PASSED=$((PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} hiredis: pkg-config not found (may be installed without .pc file)"
-    PASSED=$((PASSED + 1))
-fi
-
-TOTAL=$((TOTAL + 1))
 if pkg-config --exists libssl 2>/dev/null; then
     echo -e "${GREEN}✓${NC} libssl: $(pkg-config --modversion libssl)"
     PASSED=$((PASSED + 1))
