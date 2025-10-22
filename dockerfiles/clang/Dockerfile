@@ -44,6 +44,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libc6-dev:arm64 \
         libglib2.0-dev:arm64 \
         libpq-dev:arm64 \
+        libjson-glib-dev:arm64 \
+        libsoup-3.0-dev:arm64 \
+        uuid-dev:arm64 \
+        libssl-dev:arm64 \
+        libnm-dev:arm64 \
         pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

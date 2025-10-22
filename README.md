@@ -170,9 +170,15 @@ Modern C/C++ development:
 **ARM64 Cross-Compilation Support:**
 - **crossbuild-essential-arm64** - ARM64 cross-compilation toolchain
 - **libc6-dev:arm64** - C standard library headers
-- **libglib2.0-dev:arm64** - GLib development headers
+- **libglib2.0-dev:arm64** - GLib development headers and gio-2.0
 - **libpq-dev:arm64** - PostgreSQL client library
+- **libjson-glib-dev:arm64** - JSON-GLib parsing library
+- **libsoup-3.0-dev:arm64** - HTTP library (upgraded from 2.4)
+- **uuid-dev:arm64** - UUID generation library
+- **libssl-dev:arm64** - OpenSSL cryptographic library
+- **libnm-dev:arm64** - NetworkManager development library
 - **pkg-config** - Library configuration tool for cross-compilation
+- **PKG_CONFIG_PATH** - Pre-configured for ARM64 library detection
 
 **Custom Built Libraries (Clang 21):**
 - **Hiredis 1.3.0** - Redis C client library built from source
