@@ -24,10 +24,10 @@ cd /tmp/hiredis-build
 # Clean any previous builds
 make clean || true
 
-# Use Clang 21 with -O3 optimizations
+# Use Clang 21 with -O3 optimizations and security hardening
 export CC=clang
 export AR=llvm-ar
-export CFLAGS="-O3 -fPIC"
+export CFLAGS="-O3 -fPIC -D_FORTIFY_SOURCE=2 -fstack-protector-strong"
 
 echo "Building hiredis for AMD64..."
 make -j$(nproc) PREFIX=/usr/local
@@ -49,14 +49,16 @@ echo "=== Building ARM64 Cross-Compiled Version ==="
 # Clean for ARM64 build
 make clean
 
-# Clang cross-compilation for ARM64 with full Cortex-A78AE optimizations
+# Clang cross-compilation for ARM64 with full Cortex-A78AE optimizations and security hardening
 export CC=clang
 export AR=llvm-ar
 export CFLAGS="--target=aarch64-linux-gnu \
 -march=armv8.2-a+crypto+fp16+rcpc+dotprod+lse \
 -mtune=cortex-a78ae \
 -O3 \
--fPIC"
+-fPIC \
+-D_FORTIFY_SOURCE=2 \
+-fstack-protector-strong"
 
 # Use LLD (LLVM linker) for ARM64 shared library linking
 export LDFLAGS="--target=aarch64-linux-gnu \
