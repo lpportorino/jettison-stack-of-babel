@@ -37,12 +37,27 @@ RUN chmod -R 777 /opt/go && \
     # Make go module cache accessible
     mkdir -p /tmp/go-cache && chmod 777 /tmp/go-cache
 
-# Clean up
+# Pre-populate module cache with common Jettison dependencies
+# This enables golangci-lint to work without downloading modules
+RUN cd /tmp && \
+    echo 'module cache-warmer' > go.mod && \
+    echo 'go 1.23' >> go.mod && \
+    echo '' >> go.mod && \
+    echo 'require (' >> go.mod && \
+    echo '  golang.org/x/crypto v0.31.0' >> go.mod && \
+    echo '  github.com/redis/go-redis/v9 v9.7.0' >> go.mod && \
+    echo '  github.com/jackc/pgx/v4 v4.18.3' >> go.mod && \
+    echo '  github.com/google/go-containerregistry v0.20.2' >> go.mod && \
+    echo ')' >> go.mod && \
+    GOPATH=/opt/go go mod download && \
+    rm -rf /tmp/go.mod /tmp/go.sum
+
+# Clean up (but keep module cache!)
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.cache && \
-    go clean -cache && \
-    go clean -modcache
+    go clean -cache
+    # NOTE: Removed "go clean -modcache" to preserve downloaded modules
 
 # Switch back to developer
 USER developer
