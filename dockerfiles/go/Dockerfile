@@ -39,7 +39,9 @@ RUN chmod -R 777 /opt/go && \
 
 # Pre-populate module cache with common Jettison dependencies
 # This enables golangci-lint to work without downloading modules
-RUN cd /tmp && \
+# NOTE: Must use /opt/cache-warmer (not /tmp) - Go refuses to work in /tmp
+RUN mkdir -p /opt/cache-warmer && \
+    cd /opt/cache-warmer && \
     echo 'module cache-warmer' > go.mod && \
     echo 'go 1.23' >> go.mod && \
     echo '' >> go.mod && \
@@ -50,7 +52,7 @@ RUN cd /tmp && \
     echo '  github.com/google/go-containerregistry v0.20.2' >> go.mod && \
     echo ')' >> go.mod && \
     GOPATH=/opt/go go mod download && \
-    rm -rf /tmp/go.mod /tmp/go.sum
+    cd / && rm -rf /opt/cache-warmer
 
 # Clean up (but keep module cache!)
 RUN apt-get clean && \
